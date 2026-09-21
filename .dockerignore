@@ -1,0 +1,26 @@
+# The build context is sent to the daemon in full; keep it to what the image needs.
+# The host virtualenv alone is ~480 MB and is never used inside the container.
+.venv/
+venv/
+env/
+
+.git/
+.gitignore
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime output and secrets
+logs/
+*.log
+*.jsonl
+.env
+.env.*
+
+.vscode/
+.idea/
+.DS_Store

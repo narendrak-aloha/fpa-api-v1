@@ -1,0 +1,52 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging / build output
+*.egg-info/
+build/
+dist/
+.eggs/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.coverage.*
+coverage.xml
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
+
+# Secrets and local environment (API keys, DB passwords)
+.env
+.env.*
+!.env.example
+
+# Runtime logs (audit output may contain request data)
+logs/
+*.log
+*.jsonl
+
+# Per-user Claude Code settings (skills/ and .mcp.json stay committed)
+.claude/settings.local.json
+
+# Editor / OS files
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
