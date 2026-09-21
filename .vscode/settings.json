@@ -1,0 +1,37 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests", "-m", "not integration"],
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.py[cod]": true,
+    "**/.pytest_cache": true,
+    "**/*.egg-info": true
+  },
+  "search.exclude": {
+    "**/.venv": true,
+    "uv.lock": true
+  },
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/__pycache__/**": true
+  },
+
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[python]": {
+    "editor.tabSize": 4
+  },
+  "python-envs.pythonProjects": [
+    {
+      "path": ".",
+      "envManager": "ms-python.python:system",
+      "packageManager": "ms-python.python:pip"
+    }
+  ]
+}

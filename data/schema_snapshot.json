@@ -1,0 +1,306 @@
+{
+  "source": "seed_fpa.py",
+  "database": "fpa_cube",
+  "planning_dimensions": [
+    "billing_type",
+    "business_unit",
+    "channel",
+    "contract",
+    "cost_center",
+    "cost_pool",
+    "customer",
+    "delivery_shore",
+    "engine",
+    "funding_source",
+    "geo_country",
+    "geo_region",
+    "grade",
+    "intercompany_flag",
+    "practice",
+    "product",
+    "project",
+    "resource_employee",
+    "revenue_type"
+  ],
+  "separate_axes": [
+    "company",
+    "account",
+    "period_month"
+  ],
+  "tables": {
+    "fact_gl_actual": {
+      "version_column": "_version",
+      "columns": [
+        "company",
+        "period_month",
+        "account",
+        "dim_signature_hash",
+        "quantity",
+        "unit_price",
+        "amount_functional",
+        "functional_currency",
+        "voucher_no",
+        "_version",
+        "_is_deleted"
+      ]
+    },
+    "fact_plan_line": {
+      "version_column": "revision",
+      "columns": [
+        "plan_version",
+        "scenario_id",
+        "revision",
+        "company",
+        "period_month",
+        "account",
+        "dim_signature_hash",
+        "quantity",
+        "unit_price",
+        "amount_functional",
+        "functional_currency",
+        "plan_line_type"
+      ]
+    }
+  },
+  "scenarios": [
+    "base",
+    "stretch",
+    "downside"
+  ],
+  "drivers": [
+    "heads",
+    "available_hours",
+    "utilisation",
+    "bill_rate",
+    "realisation",
+    "attach_rate"
+  ],
+  "accounts": [
+    {
+      "account": "41000",
+      "name": "Services Revenue - Time and Materials",
+      "type": "Revenue",
+      "engine": "Services"
+    },
+    {
+      "account": "41010",
+      "name": "Services Revenue - Fixed Fee",
+      "type": "Revenue",
+      "engine": "Services"
+    },
+    {
+      "account": "41020",
+      "name": "Services Revenue - Change Orders",
+      "type": "Revenue",
+      "engine": "Services"
+    },
+    {
+      "account": "41100",
+      "name": "Subscription Revenue",
+      "type": "Revenue",
+      "engine": "Recurring"
+    },
+    {
+      "account": "41200",
+      "name": "Usage Revenue",
+      "type": "Revenue",
+      "engine": "Recurring"
+    },
+    {
+      "account": "41300",
+      "name": "Support and Maintenance Revenue",
+      "type": "Revenue",
+      "engine": "Recurring"
+    },
+    {
+      "account": "41400",
+      "name": "Rebillable Expense Revenue",
+      "type": "Revenue",
+      "engine": "Services"
+    },
+    {
+      "account": "51000",
+      "name": "Delivery Payroll",
+      "type": "COGS",
+      "engine": "Services"
+    },
+    {
+      "account": "51050",
+      "name": "Delivery Bonus and Incentive",
+      "type": "COGS",
+      "engine": "Services"
+    },
+    {
+      "account": "51100",
+      "name": "Subcontractor Cost",
+      "type": "COGS",
+      "engine": "Services"
+    },
+    {
+      "account": "51200",
+      "name": "Cloud Hosting",
+      "type": "COGS",
+      "engine": "Recurring"
+    },
+    {
+      "account": "51250",
+      "name": "Third Party Software - Resold",
+      "type": "COGS",
+      "engine": "Recurring"
+    },
+    {
+      "account": "51300",
+      "name": "Rebillable Travel",
+      "type": "COGS",
+      "engine": "Services"
+    },
+    {
+      "account": "51400",
+      "name": "Customer Support Payroll",
+      "type": "COGS",
+      "engine": "Recurring"
+    },
+    {
+      "account": "51500",
+      "name": "Intercompany Delivery Cost",
+      "type": "COGS",
+      "engine": "Shared"
+    },
+    {
+      "account": "61000",
+      "name": "Sales Payroll",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "61100",
+      "name": "Marketing Programs",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "61200",
+      "name": "Sales Commission",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "62000",
+      "name": "Research and Development Payroll",
+      "type": "OpEx",
+      "engine": "Recurring"
+    },
+    {
+      "account": "62100",
+      "name": "Product Tooling",
+      "type": "OpEx",
+      "engine": "Recurring"
+    },
+    {
+      "account": "63000",
+      "name": "General and Administrative Payroll",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "63100",
+      "name": "Facilities and Occupancy",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "63200",
+      "name": "Professional Fees",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "63300",
+      "name": "Software Subscriptions",
+      "type": "OpEx",
+      "engine": "Shared"
+    },
+    {
+      "account": "64000",
+      "name": "Depreciation and Amortisation",
+      "type": "OpEx",
+      "engine": "Shared"
+    }
+  ],
+  "metrics": {
+    "services_revenue": {
+      "kind": "additive",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020','41400'))",
+      "accounts": [
+        "41000",
+        "41010",
+        "41020",
+        "41400"
+      ]
+    },
+    "delivery_cost": {
+      "kind": "additive",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account IN ('51000','51050','51100','51300','51500'))",
+      "accounts": [
+        "51000",
+        "51050",
+        "51100",
+        "51300",
+        "51500"
+      ]
+    },
+    "subcontractor_cost": {
+      "kind": "additive",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account = '51100')",
+      "accounts": [
+        "51100"
+      ]
+    },
+    "gross_margin": {
+      "kind": "additive",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020','41400')) - sumIf({a}.amount_functional, {a}.account IN ('51000','51050','51100','51300','51500'))",
+      "accounts": [
+        "41000",
+        "41010",
+        "41020",
+        "41400",
+        "51000",
+        "51050",
+        "51100",
+        "51300",
+        "51500"
+      ]
+    },
+    "utilisation": {
+      "kind": "ratio",
+      "sql_expression": "sumIf({a}.quantity, {a}.account IN ('41000','41010','41020')) / nullIf(sumIf({a}.quantity, {a}.account IN ('51000','51050','51400')), 0)"
+    },
+    "realisation": {
+      "kind": "ratio",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020')) / nullIf(sumIf({a}.quantity, {a}.account IN ('41000','41010','41020')), 0)"
+    },
+    "gross_margin_pct": {
+      "kind": "ratio",
+      "sql_expression": "(sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020','41400')) - sumIf({a}.amount_functional, {a}.account IN ('51000','51050','51100','51300','51500'))) / nullIf(sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020','41400')), 0)"
+    },
+    "headcount": {
+      "kind": "semi_additive",
+      "sql_expression": "uniqExactIf({a}.resource_employee, {a}.resource_employee != '')"
+    },
+    "bookings": {
+      "kind": "additive",
+      "sql_expression": "sumIf({a}.amount_functional, {a}.account IN ('41000','41010','41020','41400'))",
+      "accounts": [
+        "41000",
+        "41010",
+        "41020",
+        "41400"
+      ]
+    },
+    "open_pipeline": {
+      "kind": "semi_additive",
+      "available": false,
+      "sql_expression": "0"
+    }
+  }
+}

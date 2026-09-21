@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FP&amp;A Engineering Assignment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Chivo:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FCFBF8; --paper2:#F5F3ED; --paper3:#EFEDE5;
+  --ink:#17171A; --ink2:#3D3D42; --muted:#6E6E75; --faint:#9A9AA1;
+  --rule:#E4E1D8; --rule2:#D2CEC2;
+  --accent:#2B4C7E; --accent2:#1D3557;
+  --ok:#2F6B4F; --warn:#9A3B26;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Chivo',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper); color:var(--ink2); font-family:var(--sans);
+  font-weight:300; font-size:16.5px; line-height:1.74;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+#bar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--accent);z-index:99}
+
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);max-width:1240px;margin:0 auto}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;height:100vh;padding:52px 24px 40px 28px;border-right:1px solid var(--rule);overflow-y:auto}
+nav .mark{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--ink);text-transform:uppercase;margin-bottom:5px}
+nav .markb{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--faint);margin-bottom:32px}
+nav a{
+  display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;
+  color:var(--muted);text-decoration:none;padding:6px 0 6px 13px;
+  border-left:1px solid var(--rule);transition:color .18s,border-color .18s;
+}
+nav a:hover{color:var(--ink);border-left-color:var(--rule2)}
+nav a.on{color:var(--accent);border-left-color:var(--accent)}
+nav a .n{color:var(--rule2);margin-right:9px}
+nav a.on .n{color:var(--accent)}
+nav .grp{font-family:var(--mono);font-size:9px;letter-spacing:.19em;color:var(--faint);text-transform:uppercase;margin:24px 0 8px 13px}
+
+main{padding:0 0 120px;min-width:0}
+.wrap{max-width:832px;padding:0 44px}
+
+/* ---------- masthead ---------- */
+header{padding:80px 0 44px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.26em;color:var(--accent);text-transform:uppercase;margin-bottom:28px}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.9rem,7vw,4.7rem);line-height:.97;letter-spacing:-.015em;color:var(--ink);margin-bottom:6px}
+h1 em{font-style:italic;color:var(--accent)}
+.sub{font-family:var(--serif);font-style:italic;font-size:clamp(1.18rem,2.5vw,1.56rem);color:var(--muted);line-height:1.34;margin:16px 0 40px;max-width:620px}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.meta div{background:var(--paper);padding:13px 16px}
+.meta dt{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-bottom:4px}
+.meta dd{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:500}
+
+/* ---------- type ---------- */
+section{padding:58px 0;border-bottom:1px solid var(--rule)}
+h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.8rem,3.9vw,2.5rem);line-height:1.08;letter-spacing:-.01em;color:var(--ink);margin-bottom:10px}
+.kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--accent);text-transform:uppercase;margin-bottom:15px;display:flex;align-items:center;gap:11px}
+.kicker::after{content:'';flex:1;height:1px;background:var(--rule)}
+h3{font-family:var(--sans);font-weight:600;font-size:1rem;margin:32px 0 10px;color:var(--ink)}
+h4{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:26px 0 9px;font-weight:500}
+p{margin-bottom:15px}
+p.lead{font-size:1.08rem;color:var(--ink2)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(43,76,126,.28)}
+a:hover{border-bottom-color:var(--accent)}
+strong{font-weight:600;color:var(--ink)}
+code{font-family:var(--mono);font-size:.845em;background:var(--paper2);border:1px solid var(--rule);padding:1px 5px;border-radius:2px;color:var(--accent2);overflow-wrap:break-word}
+ul,ol{margin:0 0 16px 0;padding-left:0;list-style:none}
+li{position:relative;padding-left:22px;margin-bottom:9px}
+ul>li::before{content:'';position:absolute;left:4px;top:.78em;width:6px;height:1px;background:var(--rule2)}
+ol{counter-reset:o}
+ol>li{counter-increment:o}
+ol>li::before{content:counter(o,decimal-leading-zero);position:absolute;left:0;top:.1em;font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+
+/* ---------- code ---------- */
+.code{margin:18px 0 22px;border:1px solid var(--rule);background:var(--paper2);overflow:hidden}
+.code .hd{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--rule);background:var(--paper3)}
+.code .hd span:first-child{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.code .hd span:last-child{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+.code pre{padding:15px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;line-height:1.7;color:#33333A}
+.code pre .c{color:#8E8E96;font-style:italic}
+.code pre .k{color:var(--accent)}
+.code pre .s{color:var(--ok)}
+.code pre .f{color:var(--warn)}
+
+/* ---------- callouts ---------- */
+.note{border-left:2px solid var(--rule2);padding:14px 20px;margin:20px 0;background:var(--paper2)}
+.note.hard{border-left-color:var(--accent);background:rgba(43,76,126,.045)}
+.note.warn{border-left-color:var(--warn);background:rgba(154,59,38,.045)}
+.note .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+.note.warn .lbl{color:var(--warn)}
+.note p:last-child,.note ol:last-child,.note ul:last-child{margin-bottom:0}
+
+/* ---------- example ---------- */
+.ex{border:1px solid var(--rule);margin:22px 0}
+.ex .exh{padding:9px 16px;background:var(--paper3);border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.ex .exb{padding:16px 18px}
+.ex .exb p:last-child{margin-bottom:0}
+.step{display:grid;grid-template-columns:22px 1fr;gap:0 12px;margin-bottom:13px}
+.step:last-child{margin-bottom:0}
+.step .sn{font-family:var(--mono);font-size:9.5px;color:var(--accent);padding-top:.34em}
+.step .sb{font-size:15px;min-width:0}
+.step .sb b{font-weight:600;color:var(--ink)}
+.said{font-family:var(--serif);font-style:italic;font-size:1.16rem;color:var(--ink);margin-bottom:14px;line-height:1.42}
+
+/* ---------- done ---------- */
+.done{border:1px solid var(--rule);margin:26px 0 8px}
+.done .hd{padding:9px 16px;border-bottom:1px solid var(--rule);background:var(--paper3);font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ok)}
+.done ul{margin:0;padding:14px 18px 16px}
+.done li{padding-left:25px;margin-bottom:10px;font-size:14.6px}
+.done li:last-child{margin-bottom:0}
+.done li::before{content:'';position:absolute;left:2px;top:.46em;width:9px;height:9px;border:1px solid var(--rule2);background:var(--paper);border-radius:1px}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:20px 0 24px;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:13.6px;min-width:520px}
+th{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);text-align:left;padding:10px 14px;background:var(--paper3);border-bottom:1px solid var(--rule);font-weight:500;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+
+/* ---------- diagram ---------- */
+figure{margin:28px 0 24px;border:1px solid var(--rule);background:var(--paper);padding:22px 18px 14px}
+figure.wide{width:100%}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint);margin-top:14px;text-align:center;text-transform:uppercase}
+
+.collab{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px}
+.collab span{font-family:var(--mono);font-size:12.5px;color:var(--accent);border:1px solid var(--rule2);background:var(--paper2);padding:6px 13px}
+footer{padding:50px 0 0;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.1em}
+
+/* the diagram only breaks out of the text column where the slack really exists */
+@media(min-width:1250px){
+  figure.wide{width:calc(100% + 170px)}
+}
+@media(max-width:940px){
+  .shell{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:none;border-bottom:1px solid var(--rule);padding:24px 26px;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+  nav .mark,nav .markb,nav .grp{width:100%;margin:0 0 5px}
+  nav .markb{margin-bottom:12px}
+  nav .grp{display:none}
+  nav a,nav a.on{border-left:none;padding:3px 0}
+  .wrap{padding:0 26px}
+  .meta{grid-template-columns:repeat(2,1fr)}
+}
+@media print{
+  #bar,nav{display:none}
+  .shell{grid-template-columns:1fr;max-width:none}
+  section{page-break-inside:avoid}
+  figure.wide{width:100%}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="shell">
+
+<nav>
+  <div class="mark">FP&amp;A</div>
+  <div class="markb">Engineering Assignment</div>
+  <a href="#brief"><span class="n">01</span>The problem</a>
+  <a href="#plain"><span class="n">02</span>In plain terms</a>
+  <a href="#arch"><span class="n">03</span>Architecture</a>
+  <a href="#data"><span class="n">04</span>The seed data</a>
+  <a href="#rules"><span class="n">05</span>Ground rules</a>
+  <div class="grp">Build</div>
+  <a href="#s0"><span class="n">S0</span>Environment</a>
+  <a href="#s1"><span class="n">S1</span>The plan spine</a>
+  <a href="#s2"><span class="n">S2</span>FinOpsExpr</a>
+  <a href="#s3"><span class="n">S3</span>Variance bridge</a>
+  <a href="#s4"><span class="n">S4</span>Durable recompute</a>
+  <a href="#s5"><span class="n">S5</span>The agents</a>
+  <a href="#s6"><span class="n">S6</span>The interface</a>
+  <div class="grp">Close</div>
+  <a href="#stretch"><span class="n">06</span>If time remains</a>
+  <a href="#accept"><span class="n">07</span>Acceptance</a>
+  <a href="#submit"><span class="n">08</span>Submission</a>
+</nav>
+
+<main>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Engineering Assignment</div>
+  <h1>The Re-Forecast <em>Copilot</em></h1>
+  <p class="sub">Build the slice of an FP&amp;A platform where a sentence typed by a planner becomes a governed, durable, auditable re-forecast, and the variance it produces ties to zero.</p>
+  <dl class="meta">
+    <div><dt>Timeline</dt><dd>6 days</dd></div>
+    <div><dt>Governance</dt><dd>Postgres, yours</dd></div>
+    <div><dt>Analytics</dt><dd>ClickHouse</dd></div>
+    <div><dt>Orchestration</dt><dd>Temporal</dd></div>
+    <div><dt>Agents</dt><dd>Agno</dd></div>
+    <div><dt>Query layer</dt><dd>Custom DSL</dd></div>
+    <div><dt>Interface</dt><dd>Your choice</dd></div>
+  </dl>
+</header>
+
+<!-- ================= BRIEF ================= -->
+<section id="brief">
+  <div class="kicker">01 &middot; Context</div>
+  <h2>The problem</h2>
+  <p>RealTech Global is a professional services firm: 20 legal entities, 9 countries, 9 currencies, roughly 5,000 consultants, and a smaller recurring-revenue product line alongside the services business. Two years of posted actuals sit in a ClickHouse cube. There is no ERP to lean on. Everything governed, you build.</p>
+  <p>Their finance team is eleven people and a very large spreadsheet. Every month the same thing happens: a number moves, somebody asks why, and four analysts spend three days rebuilding a bridge in Excel that does not quite tie. When the CFO asks for a re-forecast with a different assumption, it takes a week.</p>
+  <p>They want the loop closed. A planner should be able to say <span class="said">"drop Poland utilisation to 74% and re-run the second half"</span> and get back a recomputed, versioned, approvable plan, with an explanation of the gap that a CFO can act on and every number traceable to the row it came from.</p>
+  <p>You are building that path. Not all of it. One vertical slice, end to end, working.</p>
+</section>
+
+<!-- ================= PLAIN ================= -->
+<section id="plain">
+  <div class="kicker">02 &middot; Orientation</div>
+  <h2>In plain terms</h2>
+  <p>Before the detail, here is the whole thing in ordinary language. There are two things a user can do, and you are building both.</p>
+
+  <h3>One &mdash; ask a question and get a real answer</h3>
+  <div class="ex"><div class="exh">Example</div><div class="exb"><p>"Why did Poland miss its number in Q2?"</p></div></div>
+  <div class="step"><span class="sn">01</span><span class="sb">An <b>agent</b> reads the question and writes a sentence in <b>your query language</b>, not SQL. Something like <code>SELECT services_revenue BY practice WHERE geo_country = 'PL' &hellip; BRIDGE</code>.</span></div>
+  <div class="step"><span class="sn">02</span><span class="sb">Your <b>compiler</b> checks that sentence is valid, that the measures are of a type that can be aggregated the way the sentence asks, that this user is allowed to see Poland, then turns it into SQL.</span></div>
+  <div class="step"><span class="sn">03</span><span class="sb">The SQL runs against <b>a million rows</b> of real ledger data in ClickHouse.</span></div>
+  <div class="step"><span class="sn">04</span><span class="sb">The answer comes back <b>with the arithmetic that explains it</b>, and with the rows it came from, so a human can check the work.</span></div>
+  <p>The reason the agent writes your language instead of SQL is control. A query language you designed can only express things you allow. Raw SQL from a model can express anything, including a mistake nobody catches.</p>
+
+  <h3>Two &mdash; change an assumption and re-run the plan</h3>
+  <div class="ex"><div class="exh">Example</div><div class="exb"><p>"Drop Poland utilisation to 74%."</p></div></div>
+  <div class="step"><span class="sn">01</span><span class="sb">Utilisation is a <b>driver</b>, a named assumption stored in your governance database with a formula attached. Changing it is a governed edit, not a spreadsheet cell.</span></div>
+  <div class="step"><span class="sn">02</span><span class="sb">Everything downstream of that driver is now stale. A <b>Temporal workflow</b> works out exactly which numbers changed and recomputes only those.</span></div>
+  <div class="step"><span class="sn">03</span><span class="sb">The recompute may take minutes and touches three systems, one of which is unreliable on purpose. If the machine dies halfway, it <b>picks up where it left off</b>. If you run it twice, nothing doubles.</span></div>
+  <div class="step"><span class="sn">04</span><span class="sb">A human reviews and approves the new plan version. Then, and only then, it publishes.</span></div>
+
+  <h3>And the thing that ties it together</h3>
+  <p>Both paths end at the same question: <b>the plan said one number and reality was another, why?</b> That is the variance bridge, and it is the heart of the assignment.</p>
+
+  <div class="ex">
+    <div class="exh">Worked example &mdash; what a bridge has to produce</div>
+    <div class="exb">
+      <p>Poland services revenue, Q2, plan versus actual. The plan said 13.6M, reality was 11.4M, so there is a 2.2M gap to explain.</p>
+      <p>A useful answer is not "Poland missed by 2.2M". A useful answer splits that gap into causes a CFO can act on: <b>price</b> (we charged less per hour than planned, so fix discounting), <b>volume</b> (we sold fewer hours, so it is a sales problem or a bench problem), <b>mix</b> (the blend shifted between grades and services, so it is a staffing and pyramid decision) and <b>FX</b> (the z&#322;oty moved, and nobody should be fired for that).</p>
+      <p><b>Those numbers must add up to exactly &minus;2.2M.</b> Not roughly. If they add to &minus;2.1M then 0.1M of the miss has no explanation, and the whole report is untrustworthy. That is precisely the spreadsheet failure this system exists to replace.</p>
+      <p>They must also add up at every level of the rollup, not only at the top. A bridge that ties for Poland but not for Poland's Data Platform practice is wrong in a way that is easy to miss and expensive to trust.</p>
+    </div>
+  </div>
+
+  <h3>Why each piece of the stack is there</h3>
+  <ul>
+    <li><b>Postgres</b> is the governed record: plans, drivers, approvals, permissions, audit. You build this layer yourself, and the guarantees are enforced in the database, not only in your application code.</li>
+    <li><b>ClickHouse</b> holds a million rows of ledger. The application database cannot answer these questions fast enough.</li>
+    <li><b>The DSL</b> is a narrow, checkable language between the agent and the database, so the agent can never say something dangerous or something arithmetically meaningless.</li>
+    <li><b>Temporal</b> is there because recomputes are long, touch several systems and have to survive a crash and be safe to repeat. Not as a job queue with better branding.</li>
+    <li><b>Agno</b> is the natural-language front door. It makes the system usable; it is not allowed to make it unsafe.</li>
+  </ul>
+</section>
+
+<!-- ================= ARCH ================= -->
+<section id="arch">
+  <div class="kicker">03 &middot; Shape</div>
+  <h2>The two paths</h2>
+  <p>The <strong>read path</strong> answers a question. The <strong>write path</strong> changes the plan. They meet at the cube.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: a read path from planner through agent, masking gate and DSL compiler to the ClickHouse cube; a write path from the governance store through a Temporal workflow to the cube, the Commitment Service and the variance bridge.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8B8B93"/></marker>
+        <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2B4C7E"/></marker>
+      </defs>
+      <style>
+        .bx{fill:#F5F3ED;stroke:#D2CEC2;stroke-width:1}
+        .bxa{fill:#EDF1F7;stroke:#2B4C7E;stroke-width:1}
+        .bxg{fill:#FCFBF8;stroke:#E4E1D8;stroke-width:1;stroke-dasharray:3 3}
+        .t{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#17171A}
+        .ts{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#6E6E75}
+        .tl{font-family:'JetBrains Mono',monospace;font-size:9px;fill:#9A9AA1;letter-spacing:.14em}
+        .ta{font-family:'JetBrains Mono',monospace;font-size:9px;fill:#2B4C7E;letter-spacing:.1em}
+        .ln{stroke:#8B8B93;stroke-width:1;fill:none;marker-end:url(#ar)}
+        .lna{stroke:#2B4C7E;stroke-width:1;fill:none;marker-end:url(#ara)}
+      </style>
+
+      <text class="tl" x="8" y="26">READ PATH — ASK A QUESTION</text>
+      <line x1="8" y1="34" x2="992" y2="34" stroke="#E4E1D8"/>
+      <text class="tl" x="8" y="252">WRITE PATH — CHANGE THE PLAN</text>
+      <line x1="8" y1="260" x2="992" y2="260" stroke="#E4E1D8"/>
+
+      <rect class="bxg" x="8" y="56" width="120" height="46" rx="2"/>
+      <text class="t" x="68" y="76" text-anchor="middle">Planner</text>
+      <text class="ts" x="68" y="90" text-anchor="middle">natural language</text>
+
+      <rect class="bxa" x="168" y="56" width="140" height="46" rx="2"/>
+      <text class="t" x="238" y="76" text-anchor="middle">Agno agent</text>
+      <text class="ts" x="238" y="90" text-anchor="middle">team &middot; leader</text>
+
+      <rect class="bxa" x="348" y="56" width="140" height="46" rx="2"/>
+      <text class="t" x="418" y="76" text-anchor="middle">FinOpsExpr</text>
+      <text class="ts" x="418" y="90" text-anchor="middle">parse &middot; typecheck</text>
+
+      <rect class="bxa" x="528" y="56" width="140" height="46" rx="2"/>
+      <text class="t" x="598" y="76" text-anchor="middle">Compiler</text>
+      <text class="ts" x="598" y="90" text-anchor="middle">DSL &#8594; SQL</text>
+
+      <rect class="bx" x="820" y="150" width="172" height="66" rx="2"/>
+      <text class="t" x="906" y="176" text-anchor="middle">ClickHouse cube</text>
+      <text class="ts" x="906" y="192" text-anchor="middle">fact_gl_actual ~1.03M</text>
+      <text class="ts" x="906" y="205" text-anchor="middle">fact_plan_line ~232k</text>
+
+      <line class="ln" x1="128" y1="79" x2="164" y2="79"/>
+      <line class="lna" x1="308" y1="79" x2="344" y2="79"/>
+      <line class="lna" x1="488" y1="79" x2="524" y2="79"/>
+      <path class="lna" d="M668 79 L744 79 L744 172 L816 172"/>
+      <text class="ta" x="316" y="72">DSL</text>
+      <text class="ta" x="752" y="120">SQL</text>
+
+      <rect class="bxa" x="168" y="140" width="140" height="44" rx="2"/>
+      <text class="t" x="238" y="159" text-anchor="middle">Masking gate</text>
+      <text class="ts" x="238" y="173" text-anchor="middle">fail-closed</text>
+
+      <rect class="bxg" x="348" y="140" width="120" height="44" rx="2"/>
+      <text class="t" x="408" y="166" text-anchor="middle">LLM</text>
+
+      <rect class="bxa" x="168" y="200" width="140" height="40" rx="2"/>
+      <text class="ts" x="238" y="218" text-anchor="middle">LLM Disclosure Log</text>
+      <text class="ts" x="238" y="231" text-anchor="middle">append-only</text>
+
+      <line class="lna" x1="238" y1="102" x2="238" y2="136"/>
+      <line class="lna" x1="308" y1="162" x2="344" y2="162"/>
+      <line class="lna" x1="238" y1="184" x2="238" y2="196"/>
+      <text class="ta" x="316" y="155">masked</text>
+
+      <rect class="bx" x="8" y="286" width="150" height="72" rx="2"/>
+      <text class="t" x="83" y="310" text-anchor="middle">Governance store</text>
+      <text class="ts" x="83" y="326" text-anchor="middle">Plan Version</text>
+      <text class="ts" x="83" y="339" text-anchor="middle">Plan Driver</text>
+      <text class="ts" x="83" y="352" text-anchor="middle">state machine &middot; RBAC &middot; audit</text>
+
+      <rect class="bxa" x="212" y="278" width="300" height="132" rx="2"/>
+      <text class="ta" x="228" y="296">TEMPORAL WORKFLOW</text>
+      <line x1="212" y1="304" x2="512" y2="304" stroke="#2B4C7E" opacity=".35"/>
+      <rect class="bx" x="228" y="316" width="126" height="30" rx="2"/>
+      <text class="ts" x="291" y="335" text-anchor="middle">snapshot drivers</text>
+      <rect class="bx" x="370" y="316" width="126" height="30" rx="2"/>
+      <text class="ts" x="433" y="335" text-anchor="middle">resolve dirty set</text>
+      <rect class="bx" x="228" y="356" width="126" height="30" rx="2"/>
+      <text class="ts" x="291" y="375" text-anchor="middle">evaluate (fan-out)</text>
+      <rect class="bx" x="370" y="356" width="126" height="30" rx="2"/>
+      <text class="ts" x="433" y="375" text-anchor="middle">publish &middot; commit &middot; compensate</text>
+
+      <rect class="bxa" x="560" y="286" width="150" height="52" rx="2"/>
+      <text class="t" x="635" y="308" text-anchor="middle">Variance bridge</text>
+      <text class="ts" x="635" y="323" text-anchor="middle">price &middot; vol &middot; mix &middot; fx &middot; rate</text>
+
+      <rect class="bxg" x="560" y="358" width="150" height="46" rx="2"/>
+      <text class="t" x="635" y="378" text-anchor="middle">Commitment Service</text>
+      <text class="ts" x="635" y="392" text-anchor="middle">external, unreliable</text>
+
+      <line class="ln" x1="158" y1="322" x2="208" y2="322"/>
+      <line class="lna" x1="512" y1="312" x2="556" y2="312"/>
+      <line class="lna" x1="512" y1="378" x2="556" y2="378"/>
+      <path class="lna" d="M710 312 L764 312 L764 220 L862 220"/>
+      <path class="lna" d="M906 216 L906 250 L440 250 L440 274" stroke-dasharray="3 3"/>
+      <text class="ta" x="452" y="245">actuals</text>
+    </svg>
+    <figcaption>Blue = you build it. Dashed = provided.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= DATA ================= -->
+<section id="data">
+  <div class="kicker">04 &middot; What you are given</div>
+  <h2>The seed data</h2>
+  <p><code>seed_fpa.py</code> creates a ClickHouse database called <code>fpa_cube</code> and loads about 1.27 million rows into it. It takes roughly twelve seconds and it is deterministic, so the same seed always produces the same data and you can wipe and reload freely with <code>--drop</code>. It writes to ClickHouse and nothing else. It also drops <code>./out/cube_manifest.json</code> with the companies, accounts, cost centres, dimension registry and signature algorithm, which is the fastest way to seed your own governance tables.</p>
+
+  <h3>Reference tables</h3>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Table</th><th>Rows</th><th>What is in it</th></tr></thead>
+    <tbody>
+      <tr><td><code>dim_company</code></td><td>20</td><td>Legal entities across 9 countries, each with its functional currency. The group reports in USD.</td></tr>
+      <tr><td><code>dim_account</code></td><td>25</td><td>Chart-of-accounts leaves, <code>41000</code> Services Revenue through <code>64000</code> Depreciation, each tagged Revenue, COGS or OpEx. <code>51500</code> is the intercompany cost account and appears only on the buying side of an internal trade.</td></tr>
+      <tr><td><code>dim_customer</code></td><td>920</td><td>900 external customers plus one internal counterparty per legal entity, named <code>CUST-IC-&lt;company&gt;</code>.</td></tr>
+      <tr><td><code>dim_employee</code></td><td>5,000</td><td>Name, national ID, grade (Analyst to Partner), practice, country, onshore/nearshore/offshore, annual loaded cost, standard bill rate.</td></tr>
+      <tr><td><code>dim_project</code></td><td>1,400</td><td>Engagements linked to a customer and a practice, with a billing type.</td></tr>
+      <tr><td><code>dim_fx_actual</code></td><td>216</td><td>The real exchange rate to USD for each currency, each month. It drifts, as rates do.</td></tr>
+      <tr><td><code>dim_fx_plan</code></td><td>108</td><td>The rate the CFO <em>assumed</em> when the plan was set. Fixed for the year, and not equal to the actual.</td></tr>
+      <tr><td><code>dim_ledger_vintage</code></td><td>2</td><td>Each sealed close and the timestamp it was sealed at. Vintage 1 is the July close, vintage 2 is the August restatement.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Fact tables</h3>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Table</th><th>Rows</th><th>What is in it</th></tr></thead>
+    <tbody>
+      <tr><td><code>fact_gl_actual</code></td><td>~1,034,000</td><td><b>What really happened.</b> 24 months of posted ledger lines, Jan 2025 to Dec 2026, each tagged with 19 dimensions, across two vintages.</td></tr>
+      <tr><td><code>fact_plan_line</code></td><td>~231,000</td><td><b>What was supposed to happen.</b> Plan <code>PV-2026-0001</code> for 2026, in three scenarios: <code>base</code>, <code>stretch</code>, <code>downside</code>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Five things about this data that matter</h3>
+
+  <p><b>1 &middot; Every row has a quantity and a price.</b> Not just an amount. Each row carries <code>quantity</code> and <code>unit_price</code> as real, separate columns, and <code>amount = quantity &times; unit_price</code> holds on both the plan and the actual side. Without that you cannot separate "we charged less" from "we sold less", and the bridge is impossible. With it, it is fully determined by the data.</p>
+
+  <p><b>2 &middot; Plan and actual join on one key.</b> Comparing a plan line to an actual line means matching on 19 dimensions at once. Rather than a 19-column join, both sides carry <code>dim_signature_hash</code>, a single indexed value computed from all 19. Your code must compute it identically or nothing matches.</p>
+
+  <div class="code">
+    <div class="hd"><span>the join key</span><span>python</span></div>
+    <pre><span class="c"># alphabetical order is load-bearing</span>
+DIM_COLUMNS = (
+    <span class="s">"billing_type"</span>, <span class="s">"business_unit"</span>, <span class="s">"channel"</span>, <span class="s">"contract"</span>, <span class="s">"cost_center"</span>,
+    <span class="s">"cost_pool"</span>, <span class="s">"customer"</span>, <span class="s">"delivery_shore"</span>, <span class="s">"engine"</span>, <span class="s">"funding_source"</span>,
+    <span class="s">"geo_country"</span>, <span class="s">"geo_region"</span>, <span class="s">"grade"</span>, <span class="s">"intercompany_flag"</span>, <span class="s">"practice"</span>,
+    <span class="s">"product"</span>, <span class="s">"project"</span>, <span class="s">"resource_employee"</span>, <span class="s">"revenue_type"</span>,
+)
+payload   = <span class="s">"|"</span>.join(<span class="s">f"{dim}={value}"</span> <span class="k">for</span> dim, value <span class="k">in</span> zip(DIM_COLUMNS, values))
+signature = hashlib.<span class="f">sha256</span>(payload.encode(<span class="s">"utf-8"</span>)).hexdigest()[:<span class="k">16</span>]</pre>
+  </div>
+
+  <p><code>company</code>, <code>account</code> and <code>period_month</code> are separate axes, not part of the 19. Roughly 65,000 plan keys have a matching actual, and that matched set is what the bridge runs over.</p>
+
+  <p><b>3 &middot; The ledger has two vintages.</b> Every actual row carries <code>_version</code> and <code>_is_deleted</code>. Vintage 1 is what the books said at the July close. In August a subcontractor accrual was trued up and a batch of journals was reversed, and those corrections landed as vintage 2 rows on the same keys. Both vintages are still in the table. A question asked as of the July close must answer with the July numbers, and Poland's Q2 delivery cost is roughly 18% higher in vintage 2 than in vintage 1. If your reads silently take the latest version, you have quietly rewritten history, which is the thing auditors go looking for.</p>
+
+  <p><b>4 &middot; About 6% of trade is internal.</b> An intercompany sale is a sale to <code>CUST-IC-&lt;company&gt;</code>, carries <code>intercompany_flag = 'Yes'</code>, and has exactly one mirrored cost row on the buying entity in account <code>51500</code>, booked in <i>that</i> entity's functional currency at the month's actual rate. The pair nets to zero in group currency and to nothing at all in either functional currency. Group revenue is therefore not the sum of entity revenue, and you cannot eliminate before you translate.</p>
+
+  <p><b>5 &middot; There is a real story buried in it.</b> The ledger is not noise. Poland delivery margin misses badly in Q2 2026, and the cause is more than one thing at once: some rate erosion, some cost blowout, a shift in the grade pyramid, and a currency move on top. If the bridge you build is correct, it will separate those cleanly. If it is subtly wrong, it will still produce plausible-looking numbers. Point it at <code>geo_country = 'PL'</code>, revenue accounts, Q2 2026, scenario <code>base</code>, and see whether the story it tells matches the one in the data.</p>
+
+  <div class="note warn">
+    <div class="lbl">One deliberate hazard</div>
+    <p>Master data is typed by people, so a few rows in <code>dim_customer</code> contain text written to look like an instruction to a language model. That is intentional and it mirrors production. Everything the cube returns is data, never instruction, and your agent should behave accordingly.</p>
+  </div>
+</section>
+
+<!-- ================= RULES ================= -->
+<section id="rules">
+  <div class="kicker">05 &middot; Non-negotiable</div>
+  <h2>Ground rules</h2>
+  <p>These are architectural constraints, not style preferences. A submission that violates one has not solved the problem it was given, however well the rest works.</p>
+
+  <div class="note hard">
+    <div class="lbl">Hard constraints</div>
+    <ul>
+      <li><b>No agent emits SQL.</b> Agents produce DSL. A deterministic compiler you own turns DSL into SQL. There is no path from a model's output to the database that skips the parser.</li>
+      <li>The DSL evaluator does not use <code>eval</code>, <code>exec</code> or <code>compile</code>. Parse it properly.</li>
+      <li><b>No unmasked personal data reaches a model.</b> The gate fails closed: if classification errors, the call does not go out.</li>
+      <li><b>Agents never commit anything.</b> They draft. A human approves every governed transition.</li>
+      <li><b>Governance guarantees are enforced in the database.</b> A locked plan version must be unwritable through a direct <code>psql</code> session, not only through your API. Application-layer checks are necessary and not sufficient.</li>
+      <li><b>Workflow code is deterministic.</b> No I/O, no clock reads, no database access, no randomness inside a Temporal workflow. Those live in activities.</li>
+      <li><b>Re-running anything is a no-op.</b> Every write surface is idempotent. Running the same recompute twice must leave the system exactly as it was after the first run.</li>
+      <li><b>Nothing is silently swallowed.</b> An unparseable formula, a missing FX rate, a dimension that is not in the registry, a measure aggregated in a way its type does not permit: all throw. No defaults, no fallbacks, no <code>except: pass</code>.</li>
+      <li>Do not modify <code>seed_fpa.py</code> or hand-edit the seeded data to make something pass.</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <div class="lbl">On AI coding tools</div>
+    <p>Use them. We do. Claude Code, Cursor, Copilot, whatever you are fast in. There is no penalty and we would rather see what you produce at full speed. The single condition is that you can explain and defend every line you ship. We will go deep on the parts that matter, and "the model wrote that" is the one answer that does not survive the conversation.</p>
+  </div>
+</section>
+
+<!-- ================= S0 ================= -->
+<section id="s0">
+  <div class="kicker">Step 0</div>
+  <h2>Environment</h2>
+  <p>Follow <code>README.md</code>. ClickHouse, Temporal and Postgres come up in Docker and the seeder loads the cube in about twelve seconds. There is no ERP to install and no bench to configure. Every governed object in this system is one you design.</p>
+  <p>Spend twenty minutes reading the cube before you write anything. The shape of this data determines most of the decisions you are about to make.</p>
+
+  <div class="code">
+    <div class="hd"><span>orientation</span><span>clickhouse</span></div>
+    <pre><span class="c">-- what does one row actually look like</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> fpa_cube.fact_gl_actual <span class="k">LIMIT</span> 3 <span class="k">FORMAT</span> Vertical;
+
+<span class="c">-- how much of the plan can be matched to an actual</span>
+<span class="k">SELECT</span> count() <span class="k">FROM</span> (
+  <span class="k">SELECT DISTINCT</span> company, period_month, account, dim_signature_hash
+  <span class="k">FROM</span> fpa_cube.fact_plan_line <span class="k">WHERE</span> scenario_id = <span class="s">'base'</span>
+) p <span class="k">INNER JOIN</span> (
+  <span class="k">SELECT DISTINCT</span> company, period_month, account, dim_signature_hash
+  <span class="k">FROM</span> fpa_cube.fact_gl_actual <span class="k">WHERE</span> toYear(period_month) = 2026
+) a <span class="k">USING</span> (company, period_month, account, dim_signature_hash);
+
+<span class="c">-- the assumed rate is not the real rate. know the size of that.</span>
+<span class="k">SELECT</span> f.from_currency, avg(f.rate) actual, avg(p.rate) assumed
+<span class="k">FROM</span> fpa_cube.dim_fx_actual f
+<span class="k">INNER JOIN</span> fpa_cube.dim_fx_plan p
+  <span class="k">ON</span> f.period_month = p.period_month <span class="k">AND</span> f.from_currency = p.from_currency
+<span class="k">GROUP BY</span> f.from_currency <span class="k">ORDER BY</span> f.from_currency;
+
+<span class="c">-- the same quarter, read at two different closes. these do not agree.</span>
+<span class="k">SELECT</span> _version, count(), round(sum(amount_functional))
+<span class="k">FROM</span> fpa_cube.fact_gl_actual
+<span class="k">WHERE</span> geo_country = <span class="s">'PL'</span> <span class="k">AND</span> period_month <span class="k">BETWEEN</span> <span class="s">'2026-04-01'</span> <span class="k">AND</span> <span class="s">'2026-06-01'</span>
+<span class="k">GROUP BY</span> _version;
+
+<span class="c">-- internal trade. sum the pair in USD and you should get zero.</span>
+<span class="k">SELECT</span> account, count() <span class="k">FROM</span> fpa_cube.fact_gl_actual <span class="k">FINAL</span>
+<span class="k">WHERE</span> intercompany_flag = <span class="s">'Yes'</span> <span class="k">GROUP BY</span> account <span class="k">ORDER BY</span> account;</pre>
+  </div>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>ClickHouse answers, Temporal's UI loads at <code>:8233</code>, Postgres accepts a connection.</li>
+      <li><code>seed_fpa.py</code> has run clean and the row counts match the README.</li>
+      <li>Your repo has its first commit and a <code>docker compose up</code> that brings the whole stack up from nothing.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= S1 ================= -->
+<section id="s1">
+  <div class="kicker">Step 1</div>
+  <h2>The plan spine</h2>
+  <p>The governed objects. In an earlier version of this assignment an ERP supplied the approval chain, the permission levels and the audit trail, and the exercise was to wire them up correctly. Now you own all three. Postgres is the record; the shape is yours.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Object</th><th>Shape</th><th>Carries</th></tr></thead>
+    <tbody>
+      <tr><td><code>planning_model</code></td><td>config</td><td>The dimension registry (the 19), the measure registry with each measure's aggregation type, and <code>calc_order_dag</code>, the driver dependency graph.</td></tr>
+      <tr><td><code>plan_driver</code></td><td>master, effective-dated</td><td>A named assumption and its <code>formula</code> in FinOpsExpr. Utilisation, bill rate, attrition, win rate.</td></tr>
+      <tr><td><code>plan_version</code></td><td>state machine</td><td>The plan itself. <code>Draft &#8594; In-Review &#8594; Approved &#8594; Locked &#8594; Superseded</code>.</td></tr>
+      <tr><td><code>plan_version_line</code></td><td>child</td><td>One cell. Dimension signature, period, amount, and <code>driver_derivation_trace</code>.</td></tr>
+      <tr><td><code>scenario_set</code> + line</td><td>state machine</td><td>Named branches (base / stretch / downside) as driver overrides. Branches, not copies.</td></tr>
+      <tr><td><code>plan_fx_rate</code></td><td>master</td><td>The assumed rate. Deliberately separate from the real one.</td></tr>
+      <tr><td><code>variance_report</code> + line</td><td>guarded</td><td>The bridge output. An agent may advance it; only a human closes it.</td></tr>
+      <tr><td><code>llm_disclosure_log</code></td><td>append-only</td><td>What went to a model, when, under whose scope. Never the payload itself.</td></tr>
+      <tr><td><code>audit_event</code></td><td>append-only, hash-chained</td><td>Every governed transition, each row hashing the one before it.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>What the spine has to enforce</h3>
+  <ul>
+    <li><b>Approval is not self-service.</b> The person who requested a version cannot be the person who approves it.</li>
+    <li><b>Approval is gated on a stored covenant flag.</b> A version that breaches it cannot reach <code>Approved</code>, whatever the approver's role.</li>
+    <li><b><code>Locked</code> means locked, at the database level.</b> No field on a locked version can be written again, and that has to hold for a client connecting directly with <code>psql</code>. A change means a new version that supersedes the old one, and the chain between them is navigable.</li>
+    <li><b>Only <code>Approved</code> and <code>Locked</code> publishes.</b> An approved-but-unlocked version puts nothing in the cube.</li>
+    <li><b>Every line carries its derivation.</b> A plan line with an empty <code>driver_derivation_trace</code> is rejected. The number came from a driver, or it does not exist.</li>
+    <li><b>Transitions are data, not branches.</b> Which role may move which state to which state lives in a table. Adding a state must not mean editing the engine.</li>
+    <li><b>The audit log is tamper-evident.</b> Each event hashes its predecessor, and there is a verifier that fails loudly if any historical row is altered.</li>
+    <li><b>Field-level permission.</b> The covenant flag and the rate fields are readable by an analyst and writable only by a controller, enforced in one place that both the API and the agent tier route through.</li>
+    <li><b>Concurrent edits do not clobber.</b> Two writers on the same version: one wins, one is told it lost, neither silently overwrites.</li>
+  </ul>
+
+  <div class="note">
+    <div class="lbl">Judgement call</div>
+    <p>How much of this belongs in Postgres itself, as triggers, constraints, row security and generated columns, and how much belongs in application code? They are not interchangeable. A constraint cannot call your calculation engine, and application code cannot stop somebody with a database URL. Decide each one deliberately and write down why in your README. We care more about the reasoning than about which way you went.</p>
+  </div>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>A plan version can be authored, reviewed, approved by a second user and locked, through your interface.</li>
+      <li>Self-approval is refused. A covenant breach blocks approval. Editing a locked version is refused, including from a direct <code>psql</code> session.</li>
+      <li>A line without a derivation trace cannot be saved.</li>
+      <li>Scenario branches exist as driver overrides, with no duplicated plan rows.</li>
+      <li>Altering one historical audit row makes the chain verifier fail, and you can show that.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= S2 ================= -->
+<section id="s2">
+  <div class="kicker">Step 2</div>
+  <h2>FinOpsExpr</h2>
+  <p>One grammar with two entry rules. <code>expr</code> is what a planner writes in a driver formula. <code>query</code> is what an agent emits. They share a resolver, so a metric means exactly one thing whether a human typed it or a model did.</p>
+
+  <div class="code">
+    <div class="hd"><span>grammar &mdash; sketch, tighten it yourself</span><span>ebnf</span></div>
+    <pre><span class="c">// ---- entry 1: driver expression ----</span>
+expr      = term , { (<span class="s">"+"</span> | <span class="s">"-"</span>) , term } ;
+term      = factor , { (<span class="s">"*"</span> | <span class="s">"/"</span>) , factor } ;
+factor    = unary , [ <span class="s">"^"</span> , factor ] ;
+unary     = [ <span class="s">"-"</span> ] , primary ;
+primary   = NUMBER | ident | call | <span class="s">"("</span> , expr , <span class="s">")"</span> ;
+ident     = METRIC | DRIVER ;                <span class="c">// resolved, never free text</span>
+call      = FUNC , <span class="s">"("</span> , [ args ] , <span class="s">")"</span> ;
+
+<span class="c">// time      PRIOR(x,n)  LEAD(x,n)  YOY(x)  CAGR(x,n)</span>
+<span class="c">//           YTD(x)  QTD(x)  MTD(x)  ROLLING(x,n)</span>
+<span class="c">// dim       BY(x, dim...)  WHERE(x, pred)  SUM(x)  AVG(x)</span>
+<span class="c">// math      MIN MAX ABS ROUND</span>
+
+<span class="c">// ---- entry 2: query ----</span>
+query     = <span class="s">"SELECT"</span> , measures ,
+            [ <span class="s">"BY"</span> , dims ] ,
+            [ <span class="s">"WHERE"</span> , pred ] ,
+            [ <span class="s">"FOR PERIOD"</span> , range ] ,
+            [ <span class="s">"AS OF"</span> , timestamp ] ,
+            [ <span class="s">"COMPARE PLAN"</span> , ref , <span class="s">"TO ACTUAL"</span> ] ,
+            [ <span class="s">"BRIDGE"</span> ] ,
+            [ <span class="s">"LIMIT"</span> , NUMBER ] ;
+pred      = comparison , { (<span class="s">"AND"</span> | <span class="s">"OR"</span>) , comparison } ;
+comparison= dim , (<span class="s">"="</span> | <span class="s">"!="</span> | <span class="s">"IN"</span> | <span class="s">"NOT IN"</span>) , literal ;</pre>
+  </div>
+
+  <div class="code">
+    <div class="hd"><span>a driver formula</span><span>finopsexpr</span></div>
+    <pre>heads * available_hours * utilisation * bill_rate * realisation
+<span class="c">-- realisation is a separate multiplier. it is not utilisation, and the two</span>
+<span class="c">-- leakages are not the same leakage.</span>
+
+<span class="f">PRIOR</span>(services_revenue, 12) * (1 + <span class="f">YOY</span>(bookings) * attach_rate)</pre>
+  </div>
+
+  <div class="code">
+    <div class="hd"><span>what an agent emits &mdash; never SQL</span><span>finopsexpr</span></div>
+    <pre><span class="c">-- the full form: compare a plan to reality and decompose the gap</span>
+<span class="k">SELECT</span> services_revenue, gross_margin
+<span class="k">BY</span> practice, geo_country
+<span class="k">WHERE</span> geo_country <span class="k">IN</span> (<span class="s">'PL'</span>) <span class="k">AND</span> engine = <span class="s">'Services'</span>
+<span class="k">FOR PERIOD</span> 2026-Q2
+<span class="k">COMPARE PLAN</span> pv=<span class="s">'PV-2026-0001'</span> <span class="k">TO ACTUAL</span>
+<span class="k">BRIDGE</span>
+
+<span class="c">-- most questions are not bridges. this one is just a number.</span>
+<span class="k">SELECT</span> subcontractor_cost
+<span class="k">BY</span> company
+<span class="k">WHERE</span> geo_region = <span class="s">'EMEA'</span>
+<span class="k">FOR PERIOD</span> 2026-H1
+
+<span class="c">-- a ratio measure. it is not summed and it is not averaged;</span>
+<span class="c">-- it is recomputed from its own numerator and denominator per group.</span>
+<span class="k">SELECT</span> utilisation, gross_margin_pct
+<span class="k">BY</span> practice, grade
+<span class="k">WHERE</span> geo_country = <span class="s">'PL'</span> <span class="k">AND</span> delivery_shore != <span class="s">'Offshore'</span>
+<span class="k">FOR PERIOD</span> 2026-Q2
+<span class="k">LIMIT</span> 50
+
+<span class="c">-- the same question, asked of the books as they stood in July</span>
+<span class="k">SELECT</span> delivery_cost
+<span class="k">BY</span> practice
+<span class="k">WHERE</span> geo_country = <span class="s">'PL'</span>
+<span class="k">FOR PERIOD</span> 2026-Q2
+<span class="k">AS OF</span> <span class="s">'2026-07-05T18:00:00'</span>
+
+<span class="c">-- time intelligence, and a scenario that is not base</span>
+<span class="k">SELECT</span> <span class="f">YOY</span>(services_revenue), <span class="f">ROLLING</span>(bookings, 3)
+<span class="k">BY</span> practice
+<span class="k">WHERE</span> engine = <span class="s">'Services'</span>
+<span class="k">FOR PERIOD</span> 2026-Q1..2026-Q4
+<span class="k">COMPARE PLAN</span> pv=<span class="s">'PV-2026-0001'</span>, scenario=<span class="s">'downside'</span> <span class="k">TO ACTUAL</span></pre>
+  </div>
+  <p>Those are shapes, not a specification. The period syntax, how you name a scenario, whether <code>AS OF</code> takes a timestamp or a vintage number: all yours to decide, and your grammar is the thing we read. What is not negotiable is that each of them parses to an AST and compiles to parameterised SQL, and that the third one is rejected outright if your registry says those measures cannot be grouped that way.</p>
+
+  <h3>Measures have types, and the type decides what is legal</h3>
+  <p>Every measure in the registry declares how it aggregates, and the compiler enforces it. This is the part that separates a query language from string templating.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Type</th><th>Example</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td><code>additive</code></td><td>services_revenue, subcontractor_cost</td><td>Sums over every dimension including time.</td></tr>
+      <tr><td><code>semi_additive</code></td><td>headcount, open_pipeline</td><td>Sums across dimensions, but never across time. Take the closing period instead.</td></tr>
+      <tr><td><code>ratio</code></td><td>utilisation, realisation, gross_margin_pct</td><td>Never summed and never averaged across groups. Recomputed from its own numerator and denominator at whatever grain it is asked for.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><code>SUM(utilisation)</code> is a compile error with a message that says why. A rolled-up <code>gross_margin_pct</code> across three practices is not the mean of the three percentages, and if your compiler lets it be, every margin number your system produces is wrong by an amount nobody will notice until a board meeting.</p>
+
+  <h3>Reading the past as it was</h3>
+  <p><code>AS OF &lt;timestamp&gt;</code> resolves against <code>dim_ledger_vintage</code> and reads the ledger as that close saw it. Without the clause, reads see the current vintage. Every bridge result states the vintage it ran on, because a variance report that does not name its vintage cannot be reproduced.</p>
+
+  <h3>The compiler contract</h3>
+  <p><code>compile(ast, security_context) &#8594; (sql, params)</code>, and it must:</p>
+  <ul>
+    <li>Resolve every measure and dimension against the registry. An unknown name is an error, not a passthrough.</li>
+    <li>Reject any aggregation the measure's type does not permit.</li>
+    <li>Parameterise every literal. No user or model string is ever concatenated into SQL.</li>
+    <li>Inject the caller's row scope. A user restricted to three entities cannot compile a query that reads a fourth, regardless of what the DSL said.</li>
+    <li>Emit period predicates that let ClickHouse prune partitions rather than scanning the table.</li>
+    <li>Estimate the cost of the query and refuse it above a stated budget, with a specific error. An agent in a loop must not be able to table-scan a million rows twenty times.</li>
+  </ul>
+
+  <h3>Validation, at the point of authoring</h3>
+  <ul>
+    <li>Saving a driver parses its formula. Unparseable is rejected with a message that says where.</li>
+    <li>Every name a formula references must resolve to a node in <code>calc_order_dag</code>.</li>
+    <li>Saving a planning model detects cycles in the graph and rejects them.</li>
+  </ul>
+
+  <div class="note">
+    <div class="lbl">Worth thinking about</div>
+    <p>A driver that references a prior period is not the same thing as a driver that references itself. One of those is a legitimate model, a growth rate off last year's number, and one is a broken graph. Your cycle detection needs to tell them apart, and that distinction is the reason <code>PRIOR</code> exists as an operator rather than as an offset argument.</p>
+  </div>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>Both entry rules parse to an AST. There is no <code>eval</code> anywhere in the path.</li>
+      <li>A query compiles to parameterised SQL that runs against the cube and returns correct numbers.</li>
+      <li>A bad formula, an unknown measure, an illegal aggregation and a graph cycle each produce a clear, specific error.</li>
+      <li>Row scope is enforced in the compiler, and you can show a query that returns less because of who asked.</li>
+      <li>A test asserts partition pruning against ClickHouse <code>EXPLAIN indexes=1</code>, rather than asserting that you thought about it.</li>
+      <li>Tests cover the grammar: precedence, nesting, the time operators, the measure types and the failure cases.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= S3 ================= -->
+<section id="s3">
+  <div class="kicker">Step 3</div>
+  <h2>The variance bridge</h2>
+  <p>This is the centre of the assignment. Everything else is plumbing around it.</p>
+  <p>A plan said one number. The ledger said another. The bridge decomposes that gap into <b>price</b>, <b>volume</b>, <b>mix</b> and <b>FX</b> on the revenue side, and into <b>rate</b> and <b>efficiency</b> on the cost side, so that margin variance ties end to end. Every fact row carries a real <code>quantity</code> and a real <code>unit_price</code> on both sides, so this is fully determined by the data.</p>
+
+  <div class="note hard">
+    <div class="lbl">The bar</div>
+    <p>The components must sum to the gap. Not approximately. The decomposition is an algebraic identity, so it either ties or your decomposition is wrong.</p>
+    <p><code>residual = group_gap &minus; (price + volume + mix + fx)</code>, and <code>abs(residual) &lt; TOL</code> at the group sum, where <code>TOL = max(1.00, 0.01 &times; line_count)</code> in report currency.</p>
+    <p><b>And it must tie at every level of the rollup</b>, not only at the top. If the bridge ties for Poland but not for Poland's Data Platform practice, it is wrong. Ties at the total and breaks in the detail is the exact failure mode of the spreadsheet this replaces.</p>
+    <p>That tolerance is a fixed absolute floor for currency rounding. It is not scaled to materiality, because a materiality-scaled tolerance would quietly accept a decomposition that does not tie.</p>
+  </div>
+
+  <h3>Definitions you have to get right</h3>
+  <ul>
+    <li>A <b>group</b> is the set over which mix shares are computed. Elements within it are the dimension signatures. Choose the grain, state it, and be consistent.</li>
+    <li><b>Volume and mix together</b> must equal the total quantity variance for the group. If they do not, you have split them wrong and the interaction term has gone missing.</li>
+    <li><b>Mix is nested, not flat.</b> The blend shifted between practices, and within each practice it shifted between grades. Those are separate effects with separate owners, and collapsing them into one number hides the pyramid decision that caused most of the Poland miss.</li>
+    <li><b>Price</b> is a rate effect and must be measured at a quantity that makes the interaction land somewhere deliberate, rather than falling into the residual.</li>
+    <li><b>The operational components use the assumed plan rate.</b> That is what makes them constant-currency and comparable.</li>
+    <li><b>The FX component uses the real rate</b> against the assumed one. Mixing the two rate sets inside a single component is how a bridge stops tying, and it is not always obvious that it has happened.</li>
+  </ul>
+
+  <div class="note">
+    <div class="lbl">The question we will actually ask you</div>
+    <p>A sequential decomposition gives different answers depending on the order you take the factors in. Price first then volume is not the same split as volume first then price, and both tie. So either allocate the interaction terms symmetrically, or declare your ordering convention and defend it. Whichever you choose, there should be a test that demonstrates you know which one you built. This is the single question we will spend the most time on.</p>
+  </div>
+
+  <div class="code">
+    <div class="hd"><span>the assertions your work has to pass</span><span>python</span></div>
+    <pre>result = decompose(plan_lines, actual_lines, group_by=[...])
+
+<span class="k">assert</span> abs(result.residual) &lt; result.tol, \
+    <span class="s">f"bridge does not tie: residual={result.residual:,.2f}"</span>
+
+<span class="k">assert</span> abs((result.volume + result.mix) - total_quantity_variance) &lt; result.tol
+
+<span class="c"># and at every level of the rollup, not just the root</span>
+<span class="k">for</span> node <span class="k">in</span> result.walk():
+    <span class="k">assert</span> abs(node.residual) &lt; node.tol, <span class="s">f"breaks at {node.path}"</span></pre>
+  </div>
+
+  <h3>The report</h3>
+  <ul>
+    <li>Every bridge line cites the cube rows behind it. "Poland missed by 2.2M" is not an answer; "these matched lines, this decomposition, this vintage" is.</li>
+    <li>Every report names the ledger vintage it ran against. Two reports on the same quarter and different vintages should disagree, visibly and explainably.</li>
+    <li>A gap over a materiality threshold routes to escalation rather than closing quietly.</li>
+    <li>An agent may move a report to <code>Investigating</code>. Only a human closes one.</li>
+  </ul>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>The bridge runs over the matched plan/actual set and the residual is inside tolerance at every level of the rollup.</li>
+      <li>Volume plus mix equals the total quantity variance.</li>
+      <li>Practice mix and grade-within-practice mix are separate, non-zero legs.</li>
+      <li>All the legs are materially non-zero on the Poland Q2 cut. A leg that is suspiciously zero is a bug.</li>
+      <li>A property test over generated plan/actual pairs holds the identity, not just one hardcoded case.</li>
+      <li>A variance report persists with cited lines and a named vintage, and cannot be closed by an agent.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= S4 ================= -->
+<section id="s4">
+  <div class="kicker">Step 4</div>
+  <h2>Durable recompute</h2>
+  <p>A recompute touches three write surfaces and can run for minutes. It has to survive a worker dying halfway through, and it has to be safe to run twice. That is what Temporal is here for, not as a job queue with better branding.</p>
+
+  <div class="code">
+    <div class="hd"><span>the workflow</span><span>temporal / python</span></div>
+    <pre><span class="f">PlanRecomputeWorkflow</span>(plan_version, driver_shocks, requested_by)
+
+  1  snapshot_drivers      <span class="c">freeze the driver library at the effective date</span>
+  2  resolve_dirty_set     <span class="c">topological sort; only dirty dependents</span>
+  3  evaluate_partition    <span class="c">fan out to children; heartbeats; resumable</span>
+  4  write_plan_lines      <span class="c">into Postgres, each with its derivation trace</span>
+  5  await_approval        <span class="c">park here. a human signals, or the timer fires.</span>
+  6  publish_to_cube       <span class="c">fact_plan_line, idempotent on (version, revision)</span>
+  7  commit_to_treasury    <span class="c">the external service. it will fail on you.</span>
+  8  compute_variance      <span class="c">the step 3 bridge</span></pre>
+  </div>
+
+  <h3>The human in the middle</h3>
+  <p>Step 5 is not a status check. The workflow computes the new lines, then <b>parks</b>, and stays parked until a human approves through your interface. That wait is durable: it survives a worker restart, a deploy and a long weekend, because the state lives in Temporal's history rather than in a process holding a connection open.</p>
+  <ul>
+    <li>The approval arrives as a <b>signal</b>, correlated to the plan version and the person who sent it. The segregation-of-duties rule from step 1 still applies here, and the workflow is not the place you discover it was broken.</li>
+    <li>A <b>timer</b> runs alongside the wait. If nobody acts inside the window, the run escalates or expires. Which one, and after how long, is your decision to make and defend. Waiting forever is not a decision.</li>
+    <li>A <b>rejection</b> is a first-class outcome, not an error. Nothing publishes, nothing commits, and the draft lines end in a state that says who rejected them and when.</li>
+    <li>Killing the worker while a run is parked and bringing it back must leave the run parked, not restarted and not lost.</li>
+  </ul>
+  <div class="note">
+    <div class="lbl">Three ways to wait for a human</div>
+    <p>Your system now pauses for a person in three different places: an Agno tool that needs confirmation, a state machine in Postgres that needs an approver, and a Temporal workflow parked on a signal. They are not the same mechanism and they do not have the same failure modes. Say in your README which belongs where and why, and what you would lose by collapsing them into one.</p>
+  </div>
+
+  <h3>The third write surface</h3>
+  <p>An approved forecast has to be pushed to a downstream Commitment Service that finance uses to reserve budget. You write that service, and it is part of the deliverable. Its contract is fixed:</p>
+  <ul>
+    <li><code>POST /commitments</code> takes an idempotency key. The same key twice returns the first result and creates nothing new. <b>Without</b> a key it applies every time, and that path must exist so we can see whether your workflow relies on it.</li>
+    <li><code>DELETE /commitments/{id}</code> compensates, and is itself allowed to fail.</li>
+    <li>A configurable failure rate, settable at runtime, that makes any endpoint return 500 or time out. Default it to zero and document how to turn it up, because we will turn it up.</li>
+  </ul>
+  <p>It is a small service. The point is not the service, it is that your workflow has to be correct against a counterparty that is not.</p>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li><b>The workflow is deterministic.</b> No database calls, no clock, no network, no randomness in workflow code. If you need the time, get it from the workflow's own clock.</li>
+    <li><b>Activities are idempotent</b>, and the key is derived from something stable across retries rather than generated at call time.</li>
+    <li><b>The long activity heartbeats</b> and resumes from its last checkpoint instead of restarting from zero.</li>
+    <li><b>The dirty set fans out to child workflows</b>, and a run large enough to bloat its own history continues as new rather than growing without limit.</li>
+    <li><b>Retries are configured per activity</b>, with a deliberate distinction between what is worth retrying and what is not.</li>
+    <li><b>A second shock arriving mid-run is handled deliberately.</b> Use an update handler with a validator that either rejects it or folds it in, and say which and why. Silently ignoring it is not an answer.</li>
+    <li><b>A cancel signal aborts cleanly</b>, leaving no half-published revision behind.</li>
+    <li><b>A progress query</b> returns the current phase and how far through the dirty set it is, while the run is still going.</li>
+    <li><b>Compensation is real.</b> If the commitment push fails after the cube publish succeeded, the workflow does not leave those two surfaces disagreeing. Decide what correct means here and implement it.</li>
+    <li><b>Only a locked version publishes.</b> The workflow enforces that; it does not assume the caller checked.</li>
+    <li><b>The approval wait is durable and bounded.</b> A signal resumes it, a timer bounds it, a rejection ends it cleanly, and a worker restart does not disturb it.</li>
+  </ul>
+
+  <div class="note hard">
+    <div class="lbl">The three that decide this step</div>
+    <p><b>Idempotence.</b> Run the same recompute twice, back to back, with identical inputs. Row counts, amounts and revision state must be identical after the second run as after the first.</p>
+    <p><b>Durability.</b> Kill the worker mid-run and start it again. Same check. If either produces drift or duplicates, the durability layer is decorative.</p>
+    <p><b>Determinism, proven.</b> Commit a recorded workflow history and run Temporal's replayer against your current code in CI. A replay test is the only mechanical proof that your workflow is deterministic, and "I was careful" is not one.</p>
+  </div>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>A driver shock starts a workflow you can watch complete in the Temporal UI.</li>
+      <li>Killing the worker mid-run and restarting it completes the run correctly, without duplicated work.</li>
+      <li>Two identical runs leave the system in an identical state. You can show the numbers.</li>
+      <li>Cancel works. The progress query works while running. A mid-run second shock does something you chose.</li>
+      <li>A run parks on the approval, survives a worker restart while parked, and resumes on the signal.</li>
+      <li>A rejection leaves nothing published and nothing committed. The timer expiring does something you chose.</li>
+      <li>The Commitment Service at a 100% failure rate leaves the cube and the commitment ledger consistent, not half-applied.</li>
+      <li>A replay test runs in CI against a committed history.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= S5 ================= -->
+<section id="s5">
+  <div class="kicker">Step 5</div>
+  <h2>The agents</h2>
+  <p>The agent tier is the interface, not the engine. Every hard guarantee in this system holds whether or not a model behaves.</p>
+  <p>We are going to look at this step closely, and specifically at whether you used the framework or worked around it. Agno gives you teams, guardrails, hooks, dependencies and human-in-the-loop. A submission that reimplements those in <code>if</code> statements inside tool bodies has answered a different question.</p>
+
+  <h3>What the tier has to be able to do</h3>
+  <p>These are capabilities, not a roster. How many agents you build, what you call them and where you draw the lines between them is your design, and it is one of the things we will ask you about. Do not read the four bullets below as four job titles.</p>
+  <ul>
+    <li><b>Answer a question about the numbers.</b> Turn English into a <code>query</code>, run it through the compiler, and narrate the result with the rows it came from.</li>
+    <li><b>Explain a gap.</b> Read a bridge and say what happened in language a CFO would use, without inventing a figure that is not in the data.</li>
+    <li><b>Propose a change to the model.</b> Turn an intent into an <code>expr</code> and put it forward as a draft assumption. Never commit it.</li>
+    <li><b>Notice when the data is wrong.</b> Reconcile totals across vintages and raise a drift flag it is not allowed to suppress.</li>
+  </ul>
+  <p>We will ask questions that are not written down anywhere on this page. Building for the handful of examples in step 2 is the obvious trap and we will find it in about ninety seconds.</p>
+  <p>Whether that is four agents, two, or one agent and a nested team, you decide. What is not open is that <b>none of them can write anything</b> and <b>none of them can reach a database except through the compiler</b>.</p>
+
+  <h3>It is a team, with a leader</h3>
+  <p>Build this as an Agno <code>Team</code>, not as a handful of agents your API calls in sequence. A leader receives the request, decides what to do with it, and owns the response that comes back. That is the part we want to see you reason about.</p>
+  <ul>
+    <li><b>Pick a mode and defend it.</b> <code>coordinate</code> has the leader decompose and synthesize, and costs an extra model call on every turn. <code>route</code> hands off and returns the member's answer directly, which is cheap but gives you nobody checking the output. <code>tasks</code> runs a loop, which needs <code>max_iterations</code> or it is a runaway. <code>broadcast</code> is almost certainly wrong here, and knowing why is the point.</li>
+    <li><b>Members carry stable ids.</b> Delegation identity that shifts between runs makes a trace unreadable and an eval impossible.</li>
+    <li><b>Scope propagates.</b> The caller's entity scope reaches every member, and no member can hold wider scope than the human who asked. Work out whether that belongs on the team, on each member, or both, and be ready to show what happens if a member is invoked without it.</li>
+    <li><b>So do the guardrails.</b> A guardrail on the leader alone does not protect a member that calls a tool itself. Decide where yours sit and say what the other placement would have missed.</li>
+    <li><b>Coordination is not free.</b> The leader and every member is a separate model call. Report what the team costs against a single agent doing the same work, in tokens and in latency, and say whether it was worth it. "It felt more organised" is not a finding.</li>
+  </ul>
+
+  <div class="code">
+    <div class="hd"><span>the only tools they get</span><span>agno</span></div>
+    <pre><span class="f">list_metrics</span>()                  <span class="c">what can be asked for, and how each aggregates</span>
+<span class="f">list_dimensions</span>()               <span class="c">what it can be sliced by</span>
+<span class="f">run_finops_query</span>(dsl: str)      <span class="c">parse -&gt; typecheck -&gt; authorise -&gt; compile -&gt; run</span>
+<span class="f">propose_driver</span>(dsl: str)        <span class="c">parse -&gt; validate -&gt; save as DRAFT, pending approval</span>
+
+<span class="c"># there is no run_sql. adding one is the wrong answer to every problem</span>
+<span class="c"># you will hit in this step.</span></pre>
+  </div>
+
+  <h3>What we expect you to use, and why</h3>
+  <ul>
+    <li><b>The DSL comes back as a typed object</b>, via <code>output_schema</code>, not as a string you regex. On a parse failure the agent gets the compiler's error back and one bounded retry, with <code>tool_call_limit</code> capping the loop. An unbounded repair loop against a paid model is a cost incident waiting to happen.</li>
+    <li><b>Guardrails are classes, not prompt text.</b> A PII guardrail and a custom <code>BaseGuardrail</code> for injection defence, attached as <code>pre_hooks</code>. Prompt instructions are not a control.</li>
+    <li><b>An output guardrail checks the arithmetic.</b> A post-hook that verifies every figure in the narrative appears in the cited result set, and fails the run if the model invented one. This is the requirement we care about most in this step: an FP&amp;A agent that hallucinates a number is worse than no agent.</li>
+    <li><b>The masking gate and the disclosure log are tool hooks</b>, so the guarantee is structural. Implemented inside each tool body, it is one forgotten tool away from a leak.</li>
+    <li><b>The security context arrives through <code>dependencies</code></b>, resolved at run time from the calling human. Scope that lives in a prompt is not scope.</li>
+    <li><b>Human approval uses Agno's HITL</b>, not a side channel. <code>propose_driver</code> pauses the run, an approval persists, a second human resolves it, and the run continues. That approval must correlate to a row in your governance store, so the agent tier and the plan spine agree on who approved what.</li>
+    <li><b>It runs behind an authenticated, traced HTTP surface.</b> The scope arrives from the caller's token, not from a variable you set in a test. Whether that is a service of its own or mounted into the API you were writing anyway is your call, and your README says which and why.</li>
+  </ul>
+
+  <h3>The masking gate</h3>
+  <p>One chokepoint between the cube and any model. In order, every time:</p>
+  <div class="step"><span class="sn">01</span><span class="sb">Resolve the requesting human's scope. The agent borrows it and never exceeds it.</span></div>
+  <div class="step"><span class="sn">02</span><span class="sb">Fetch only what is in scope, through the compiler. Never raw SQL, never the governance database.</span></div>
+  <div class="step"><span class="sn">03</span><span class="sb">Classify fields against the masking policy. Classification is by dimension, not by guessing at text: <code>resource_employee</code>, <code>national_id</code>, compensation and customer identity are personal because of what they are.</span></div>
+  <div class="step"><span class="sn">04</span><span class="sb">Mask. Generalise by default, <i>a Senior Consultant in the Poland practice</i>, and tokenise consistently where an identifier genuinely has to persist across a conversation.</span></div>
+  <div class="step"><span class="sn">05</span><span class="sb">Write the disclosure log row <b>before</b> the call goes out. Classes detected, methods applied, scope, payload hash. Never the payload.</span></div>
+  <div class="step"><span class="sn">06</span><span class="sb">Send. If any step above fails, nothing is sent.</span></div>
+
+  <div class="note warn">
+    <div class="lbl">Untrusted input</div>
+    <p>Some of what the cube returns will read like instructions addressed to a model. It is not. Everything that comes back from a query is data. Your agent should be able to summarise a customer whose name is an attempted instruction without doing what the name says, and you should be able to demonstrate that on camera.</p>
+    <p>We will also try, in plain English, to talk your agent into widening its own entity scope. It should not work, and it should not work for a reason you can point at in the code.</p>
+  </div>
+
+  <div class="note">
+    <div class="lbl">Orchestration, three ways</div>
+    <p>By this point your system has Temporal workflows, an Agno team leader delegating to members, and Agno workflows available if you want them. Three ways to make something happen in an order. Where is the boundary? Why is the recompute not an Agno workflow, and why is the conversation not a Temporal one, and what does the team leader decide that your code should have decided instead? Write it down. It is a fair question and there is more than one defensible answer.</p>
+  </div>
+
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>A natural-language question produces DSL, which produces SQL, which produces a cited, correct answer.</li>
+      <li>No agent can reach either database except through the compiler.</li>
+      <li>Personal data is masked before egress, and the disclosure log proves it, written before the send and never editable after.</li>
+      <li>A classification failure blocks the call rather than degrading to sending raw data.</li>
+      <li>A number that is not in the cited data cannot survive into the answer.</li>
+      <li>A proposed assumption pauses for a human and lands as a draft with an approval record.</li>
+      <li>Hostile text in the data is treated as data, and a scope-widening attempt fails, including against a member invoked directly.</li>
+      <li>The team's mode is a choice you can defend, and you have the token and latency numbers to go with it.</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ================= S6 ================= -->
+<section id="s6">
+  <div class="kicker">Step 6</div>
+  <h2>The interface</h2>
+  <p>React, Next, Vue, Svelte, plain HTML. We do not care, and we are not grading your CSS. What we are grading is whether the interface makes the guarantees visible, because a governed system nobody can see the governance in is just a database.</p>
+  <p>Five things have to be on screen. Anything beyond them is your own time, spent on the wrong step.</p>
+  <ul>
+    <li><b>The DSL the agent wrote</b>, shown next to the answer. Not hidden in a log.</li>
+    <li><b>The bridge</b>, as a waterfall, with every leg labelled and the residual displayed rather than rounded away.</li>
+    <li><b>Drill-through.</b> Click a bridge line, see the cube rows it came from, with the vintage it read.</li>
+    <li><b>Live workflow progress</b>, driven by the Temporal progress query, updating while a recompute runs.</li>
+    <li><b>The human action.</b> Approve, reject, lock. The button that an agent cannot press.</li>
+  </ul>
+  <div class="note">
+    <div class="lbl">Budget it</div>
+    <p>Half a day, at most. Every hour past that is an hour not spent on the bridge, and we will notice which one you chose.</p>
+  </div>
+  <div class="done">
+    <div class="hd">Done when</div>
+    <ul>
+      <li>All five are visible in a browser and demonstrable in one pass on camera.</li>
+      <li>The approve action respects the same permission rules as the API, because it goes through them.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= STRETCH ================= -->
+<section id="stretch">
+  <div class="kicker">06 &middot; Optional</div>
+  <h2>If time remains</h2>
+  <p>None of this is expected. Finishing the six build steps properly beats starting any of it. The first two are the ones we would most like to see, and they are the reason the cube carries vintages and intercompany pairs at all.</p>
+  <ul>
+    <li><b>Consolidation.</b> Group reporting in USD with intercompany trade eliminated and a translation adjustment that is distinct from the transaction FX leg. Consolidated revenue should come out roughly 130M below the sum of the entities, and the difference should be explainable line by line.</li>
+    <li><b>The bridge across vintages.</b> Run Poland Q2 as of the July close and again as of the August close, and decompose the difference between the two reports. "The number changed because the books changed" is a real finance question and almost nobody's system can answer it.</li>
+    <li><b>An Agno eval suite.</b> <code>Case</code> plus the eval CLI, with reliability checks on the tool calls, a judge on the narrative, and an adversarial set covering injection, scope escalation and PII exfiltration, wired into CI with a JSON report. If you build this we will run it, and it is the most convincing single artefact you can hand us.</li>
+    <li><b>Scenario compare.</b> Base against downside on one screen, driver deltas explained.</li>
+    <li><b>A rolling forecast tick.</b> Append-only, with a back-test on held-out actuals. Watch what happens to error metrics near zero-actual periods.</li>
+    <li><b>Cube pre-aggregations</b> or a semantic layer, if you can show a latency number before and after.</li>
+    <li><b>Row policies in ClickHouse</b> as a second enforcement layer beneath the compiler, so that bypassing your API still returns nothing.</li>
+  </ul>
+</section>
+
+<!-- ================= ACCEPT ================= -->
+<section id="accept">
+  <div class="kicker">07 &middot; Acceptance</div>
+  <h2>What we will run</h2>
+  <p>We will clone your repo, follow your README, and try to do these on a clean machine. Anything that needs a step not written down counts as not working.</p>
+  <ol>
+    <li>Bring the stack up and seed the cube from your instructions alone.</li>
+    <li>Author a plan version, try to approve it as its own author, and get refused.</li>
+    <li>Approve it as a second user, lock it, then try to edit it and get refused. Then open <code>psql</code> and try to edit it there, and get refused again.</li>
+    <li>Alter one historical audit row by hand and watch your chain verifier fail.</li>
+    <li>Save a driver with a malformed formula and get a specific error. Save a planning model with a cyclic graph and get a specific error.</li>
+    <li>Compile <code>SUM(utilisation)</code> and get a type error that explains itself.</li>
+    <li>Ask, in English, why Poland missed in Q2 2026. Read the DSL it produced and the trace of which member produced it.</li>
+    <li>Ask it again <code>AS OF</code> the July close and get a different, correct answer.</li>
+    <li>Check the disclosure log for those calls and confirm nothing personal left the building.</li>
+    <li>Try to talk the agent into a fourth entity, and into obeying a customer name.</li>
+    <li>Shock a driver, watch the workflow run in the Temporal UI, kill the worker halfway, and watch it finish.</li>
+    <li>Let it park on the approval, kill the worker while it is parked, bring it back, then approve and watch it resume.</li>
+    <li>Run the same recompute again and diff the cube. Expect no change.</li>
+    <li>Turn the Commitment Service failure rate to 100% and confirm nothing is left half-applied.</li>
+    <li>Run the bridge, read the residual, and check that it still ties one level down.</li>
+  </ol>
+
+  <div class="note">
+    <div class="lbl">Partial work</div>
+    <p>Something you did not finish is fine, and saying so plainly in your README is much better than a stub that looks finished. We will read the honest gap as judgement. We will read a stub that fails on our machine as something else.</p>
+    <p>Six build steps in six days is a lot, and it is meant to be. We would rather see four of them done properly than six of them half done.</p>
+  </div>
+</section>
+
+<!-- ================= SUBMIT ================= -->
+<section id="submit">
+  <div class="kicker">08 &middot; Submission</div>
+  <h2>How to hand it in</h2>
+
+  <p>One of our consultants will reach out with where to send it. Have these ready.</p>
+
+  <h4>README</h4>
+  <p>At the top: the video link. Then:</p>
+  <ul>
+    <li>How to run it, from nothing, on a machine that is not yours.</li>
+    <li>The architecture: what talks to what, and where the boundaries are.</li>
+    <li>The decisions that were genuinely arguable, which way you went, and what you gave up. Especially where you put a guarantee in the database rather than in application code, or the reverse, and where you drew the line between Temporal and Agno.</li>
+    <li>What is not finished, and what is knowingly simplified.</li>
+    <li>What you would do with two more weeks.</li>
+  </ul>
+
+  <h4>Video</h4>
+  <p><strong>10 to 15 minutes.</strong> YouTube unlisted, Loom, anything with a link that works. Roughly:</p>
+  <ul>
+    <li>Two minutes of architecture, the two paths and why each piece is there.</li>
+    <li>The live demo: a question in English, the DSL it became, the recompute running, the bridge tying.</li>
+    <li>Kill the worker on camera, including once while the run is parked on a human. Restart it. Let it finish.</li>
+    <li>Ask the same question as of the July close and show why the answer changes.</li>
+    <li>Try, on camera, to talk your own agent into a fourth entity. Fail.</li>
+    <li>Two minutes on the hardest thing you hit and how you worked it out.</li>
+  </ul>
+  <p>Unpolished is fine. One take is fine. We want to hear you think, not watch a product launch.</p>
+
+  <div class="note hard">
+    <div class="lbl">Last thing</div>
+    <p>Build it the way you would build something you have to maintain. If something forces a trade-off you are not happy with, make the call, write down why, and move on. That note in your README is worth more to us than the extra hour would have been.</p>
+    <p style="margin-top:10px">All the best.</p>
+  </div>
+
+  <footer>FP&amp;A PLATFORM &middot; ENGINEERING ASSIGNMENT</footer>
+</section>
+
+</div>
+</main>
+</div>
+
+<script>
+(function(){
+  var bar=document.getElementById('bar');
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  function onScroll(){
+    var h=document.documentElement;
+    bar.style.width=((h.scrollTop/(h.scrollHeight-h.clientHeight||1))*100)+'%';
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+  if('IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(!e.isIntersecting||!e.target.id) return;
+        links.forEach(function(a){
+          a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id);
+        });
+      });
+    },{rootMargin:'-15% 0px -70% 0px',threshold:0});
+    document.querySelectorAll('section[id]').forEach(function(s){ obs.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

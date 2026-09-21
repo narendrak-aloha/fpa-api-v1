@@ -1,0 +1,91 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // Host-run debugging against the docker stack. Start only the backing services first
+    // and stop the containers that own the same ports:
+    //   docker compose --env-file .env -f docker/docker-compose.yml up -d postgres clickhouse temporal
+    //   docker compose -f docker/docker-compose.yml stop fpa-dev      (frees :8000)
+    //   docker compose -f docker/docker-compose.yml stop commitment   (frees :8100)
+    //   docker compose -f docker/docker-compose.yml stop worker       (before running the worker here)
+    // The schema and seed data come from the app container's first start (make docker-local-run).
+    {
+      "name": "API (uvicorn :8000)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app:app", "--host", "127.0.0.1", "--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PGHOST": "localhost",
+        "PGPORT": "5431",
+        "PGUSER": "postgres",
+        "PGPASSWORD": "fpa",
+        "PGDATABASE": "fpa",
+        "LOG_LEVEL": "DEBUG"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "Recompute worker",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "fpa_project.recompute.worker",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "FPA_ROLE": "worker",
+        "PGHOST": "localhost",
+        "PGPORT": "5431",
+        "PGUSER": "postgres",
+        "PGPASSWORD": "fpa",
+        "PGDATABASE": "fpa",
+        "LOG_LEVEL": "DEBUG"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "Commitment service (uvicorn :8100)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["fpa_project.commitment.service:app", "--host", "127.0.0.1", "--port", "8100"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "FPA_ROLE": "commitment",
+        "PGHOST": "localhost",
+        "PGPORT": "5431",
+        "PGUSER": "postgres",
+        "PGPASSWORD": "fpa",
+        "PGDATABASE": "fpa",
+        "LOG_LEVEL": "DEBUG"
+      },
+      "justMyCode": true
+    },
+    // Unit tests only: the integration marker needs the whole stack.
+    {
+      "name": "pytest: unit (not integration)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-m", "not integration"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": false
+    },
+    {
+      "name": "pytest: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": false
+    }
+  ]
+}
