@@ -1,0 +1,280 @@
+(* ========================================================= *)
+(* FINOPSEXPR GRAMMAR SPECIFICATION                         *)
+(* ========================================================= *)
+
+(* Whitespace between tokens is ignored. Keywords are uppercase. *)
+
+(* --------------------------------------------------------- *)
+(* Entry Rule 1: Driver Expressions                         *)
+(* --------------------------------------------------------- *)
+
+expr            = term , { ( "+" | "-" ) , term } ;
+
+term            = factor , { ( "*" | "/" ) , factor } ;
+
+factor          = unary , [ "^" , factor ] ;
+
+unary           = [ "-" ] , primary ;
+
+primary         = NUMBER
+                | ident
+                | func_call
+                | "(" , expr , ")" ;
+
+ident           = METRIC_NAME
+                | DRIVER_NAME ;
+
+func_call       = FUNC_IDENT , "(" , [ expr_args ] , ")" ;
+
+expr_args       = expr , { "," , expr } ;
+
+
+(* --------------------------------------------------------- *)
+(* Entry Rule 2: Query DSL                                  *)
+(* --------------------------------------------------------- *)
+
+query           = "SELECT" , select_list
+                , [ "BY" , dim_list ]
+                , [ "WHERE" , predicate_clause ]
+                , [ "FOR PERIOD" , period_spec ]
+                , [ "AS OF" , ISO_TIMESTAMP ]
+                , [ "COMPARE PLAN" , plan_ref , "TO ACTUAL" ]
+                , [ "BRIDGE" ]
+                , [ "LIMIT" , NUMBER ] ;
+
+
+(* --------------------------------------------------------- *)
+(* Query Components                                          *)
+(* --------------------------------------------------------- *)
+
+select_list     = measure_expr , { "," , measure_expr } ;
+
+measure_expr    = ( METRIC_NAME | time_func )
+                  [ "AS" , ALIAS_IDENT ] ;
+
+time_func       = TIME_FUNC_NAME
+                  , "("
+                  , ( METRIC_NAME | time_func )
+                  , [ "," , NUMBER ]
+                  , ")" ;
+
+dim_list        = DIM_NAME , { "," , DIM_NAME } ;
+
+
+(* --------------------------------------------------------- *)
+(* Predicates                                                 *)
+(* --------------------------------------------------------- *)
+
+predicate_clause
+                = comparison
+                  , { ( "AND" | "OR" ) , comparison } ;
+
+comparison      = scalar_comparison
+                | membership_comparison ;
+
+scalar_comparison
+                = ( DIM_NAME | METRIC_NAME )
+                  , scalar_comp_op
+                  , scalar_literal ;
+
+membership_comparison
+                = ( DIM_NAME | METRIC_NAME )
+                  , ( "IN" | "NOT IN" )
+                  , list_literal ;
+
+scalar_comp_op  = "="
+                | "!="
+                | ">"
+                | ">="
+                | "<"
+                | "<=" ;
+
+scalar_literal  = STRING_LITERAL
+                | NUMBER ;
+
+list_literal    = "("
+                  , scalar_literal
+                  , { "," , scalar_literal }
+                  , ")" ;
+
+
+(* --------------------------------------------------------- *)
+(* Periods                                                    *)
+(* --------------------------------------------------------- *)
+
+period_spec     = SINGLE_PERIOD
+                | RANGE_PERIOD ;
+
+SINGLE_PERIOD   = YEAR_PAT
+                | QUARTER_PAT
+                | HALF_PAT
+                | MONTH_PAT ;
+
+RANGE_PERIOD    = SINGLE_PERIOD
+                  , ".."
+                  , SINGLE_PERIOD ;
+
+YEAR_PAT        = YEAR ;
+
+QUARTER_PAT     = YEAR
+                  , "-"
+                  , ( "Q1" | "Q2" | "Q3" | "Q4" ) ;
+
+HALF_PAT        = YEAR
+                  , "-"
+                  , ( "H1" | "H2" ) ;
+
+MONTH_PAT       = YEAR
+                  , "-"
+                  , MONTH ;
+
+
+(* --------------------------------------------------------- *)
+(* Plan References                                           *)
+(* --------------------------------------------------------- *)
+
+plan_ref        = "pv="
+                  , STRING_LITERAL
+                  , [ "," , "scenario=" , SCENARIO_NAME ] ;
+
+SCENARIO_NAME   = "'base'"
+                | "'stretch'"
+                | "'downside'" ;
+
+
+(* --------------------------------------------------------- *)
+(* Lexical Terminals                                         *)
+(* --------------------------------------------------------- *)
+
+METRIC_NAME     = "services_revenue"
+                | "delivery_cost"
+                | "subcontractor_cost"
+                | "gross_margin"
+                | "utilisation"
+                | "realisation"
+                | "gross_margin_pct"
+                | "headcount"
+                | "bookings"
+                | "open_pipeline" ;
+
+DIM_NAME        = "company"
+                | "account"
+                | "billing_type"
+                | "business_unit"
+                | "channel"
+                | "contract"
+                | "cost_center"
+                | "cost_pool"
+                | "customer"
+                | "delivery_shore"
+                | "engine"
+                | "funding_source"
+                | "geo_country"
+                | "geo_region"
+                | "grade"
+                | "intercompany_flag"
+                | "practice"
+                | "product"
+                | "project"
+                | "resource_employee"
+                | "revenue_type" ;
+
+TIME_FUNC_NAME  = "PRIOR"
+                | "LEAD"
+                | "YOY"
+                | "CAGR"
+                | "YTD"
+                | "QTD"
+                | "MTD"
+                | "ROLLING" ;
+
+FUNC_IDENT      = TIME_FUNC_NAME
+                | "BY"
+                | "WHERE"
+                | "SUM"
+                | "AVG"
+                | "MIN"
+                | "MAX"
+                | "ABS"
+                | "ROUND" ;
+
+DRIVER_NAME     = IDENTIFIER ;
+
+ALIAS_IDENT     = IDENTIFIER ;
+
+IDENTIFIER      = LETTER
+                  , { LETTER | DIGIT | "_" } ;
+
+NUMBER          = DIGIT
+                  , { DIGIT }
+                  , [ "." , DIGIT , { DIGIT } ] ;
+
+YEAR            = DIGIT , DIGIT , DIGIT , DIGIT ;
+
+MONTH           = "01" | "02" | "03" | "04"
+                | "05" | "06" | "07" | "08"
+                | "09" | "10" | "11" | "12" ;
+
+ISO_TIMESTAMP   = "'"
+                  , YEAR
+                  , "-"
+                  , MONTH
+                  , "-"
+                  , DAY
+                  , "T"
+                  , HOUR
+                  , ":"
+                  , MINUTE
+                  , ":"
+                  , SECOND
+                  , "'" ;
+
+DAY             = "01" | "02" | "03" | "04" | "05"
+                | "06" | "07" | "08" | "09" | "10"
+                | "11" | "12" | "13" | "14" | "15"
+                | "16" | "17" | "18" | "19" | "20"
+                | "21" | "22" | "23" | "24" | "25"
+                | "26" | "27" | "28" | "29" | "30"
+                | "31" ;
+
+HOUR            = "00" | "01" | "02" | "03" | "04"
+                | "05" | "06" | "07" | "08" | "09"
+                | "10" | "11" | "12" | "13" | "14"
+                | "15" | "16" | "17" | "18" | "19"
+                | "20" | "21" | "22" | "23" ;
+
+MINUTE          = "00" | "01" | "02" | "03" | "04"
+                | "05" | "06" | "07" | "08" | "09"
+                | "10" | "11" | "12" | "13" | "14"
+                | "15" | "16" | "17" | "18" | "19"
+                | "20" | "21" | "22" | "23" | "24"
+                | "25" | "26" | "27" | "28" | "29"
+                | "30" | "31" | "32" | "33" | "34"
+                | "35" | "36" | "37" | "38" | "39"
+                | "40" | "41" | "42" | "43" | "44"
+                | "45" | "46" | "47" | "48" | "49"
+                | "50" | "51" | "52" | "53" | "54"
+                | "55" | "56" | "57" | "58" | "59" ;
+
+SECOND          = MINUTE ;
+
+STRING_LITERAL  = "'"
+                  , { STRING_CHAR | "''" }
+                  , "'" ;
+
+LETTER          = "A" | "B" | "C" | "D" | "E" | "F"
+                | "G" | "H" | "I" | "J" | "K" | "L"
+                | "M" | "N" | "O" | "P" | "Q" | "R"
+                | "S" | "T" | "U" | "V" | "W" | "X"
+                | "Y" | "Z"
+                | "a" | "b" | "c" | "d" | "e" | "f"
+                | "g" | "h" | "i" | "j" | "k" | "l"
+                | "m" | "n" | "o" | "p" | "q" | "r"
+                | "s" | "t" | "u" | "v" | "w" | "x"
+                | "y" | "z" ;
+
+DIGIT           = "0" | "1" | "2" | "3" | "4"
+                | "5" | "6" | "7" | "8" | "9" ;
+
+STRING_CHAR     = any character except "'" ;
+
