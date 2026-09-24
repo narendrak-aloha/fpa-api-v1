@@ -619,7 +619,7 @@ class Compiler:
         scenario = self.bind(query.plan.scenario, "String")
         join_keys = " AND ".join(f"a.{key} = p.{key}" for key in ACTUAL_KEY)
         sql = (
-            f"SELECT a.company, a.period_month, a.account, d.account_type, a.functional_currency, {dim_cols}"
+            f"SELECT a.company, a.period_month, a.account, d.account_type AS account_type, a.functional_currency, {dim_cols}"
             "a.dim_signature_hash, "
             "p.quantity AS plan_quantity, p.unit_price AS plan_unit_price, p.amount_functional AS plan_amount, "
             "a.quantity AS actual_quantity, a.unit_price AS actual_unit_price, a.amount_functional AS actual_amount, "

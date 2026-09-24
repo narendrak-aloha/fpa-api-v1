@@ -389,6 +389,7 @@ def _attach_contributions(rows: list[dict[str, Any]], leg: str, margin: bool) ->
     usable = [r for r in rows if r["plan_quantity"] is not None]
     for row in rows:
         row["contribution"] = None
+        row["calculation"] = None
     if not usable:
         return
     price_first = (rows[0].get("convention") or "volume_first") == "price_first"
@@ -416,6 +417,60 @@ def _attach_contributions(rows: list[dict[str, Any]], leg: str, margin: bool) ->
             "volume": volume, "mix": D(0) if cost else quantity - volume,
         }[leg]
         row["contribution"] = value.quantize(D("0.01"))
+        # Preserve Decimal inputs as strings: the UI must not reconstruct
+        # group averages from a page of rows or round inputs before explaining.
+        applies = leg == "fx" or (cost if leg in ("rate", "efficiency") else not cost)
+        quantity_label = "Plan quantity" if price_first else "Actual quantity"
+        price_label = "Actual unit price" if price_first else "Plan unit price"
+        basis = D(row["actual_unit_price"] if price_first else row["plan_unit_price"])
+        formulas = {
+            "price": f"(Actual unit price − Plan unit price) × {quantity_label} × Plan FX rate",
+            "rate": f"(Actual unit price − Plan unit price) × {quantity_label} × Plan FX rate",
+            "efficiency": f"(Actual quantity − Plan quantity) × {price_label} × Plan FX rate",
+            "volume": "(Actual quantity − Plan quantity) × Group weighted unit price (USD)",
+            "mix": f"(Actual quantity − Plan quantity) × ({price_label} × Plan FX rate − Group weighted unit price (USD))",
+            "fx": "Actual amount (local currency) × (Actual FX rate − Plan FX rate)",
+        }
+        pp, ap = D(row["plan_unit_price"]), D(row["actual_unit_price"])
+        pfx, afx = D(row["plan_fx"]), D(row["actual_fx"])
+        qty = pq if price_first else aq
+        substitutions = {
+            "price": f"({ap} − {pp}) × {qty} × {pfx}",
+            "rate": f"({ap} − {pp}) × {qty} × {pfx}",
+            "efficiency": f"({aq} − {pq}) × {basis} × {pfx}",
+            "volume": f"({aq} − {pq}) × {avg}",
+            "mix": f"({aq} − {pq}) × ({basis} × {pfx} − {avg})",
+            "fx": f"{row['actual_amount']} × ({afx} − {pfx})",
+        }
+        inputs = {
+            "Plan quantity": str(pq), "Actual quantity": str(aq),
+            "Plan unit price (local currency)": str(pp), "Actual unit price (local currency)": str(ap),
+            "Plan FX rate (USD per local currency unit)": str(pfx),
+        }
+        if leg == "fx":
+            inputs = {"Actual amount (local currency)": str(row["actual_amount"]),
+                      "Actual FX rate (USD per local currency unit)": str(afx),
+                      "Plan FX rate (USD per local currency unit)": str(pfx)}
+        if leg in ("volume", "mix"):
+            inputs["Group weighted unit price (USD)"] = str(avg)
+        notes = ["Uses full source precision; table cells are rounded. Result is rounded to cents."]
+        if leg in ("volume", "mix"):
+            notes.append("Group weighted unit price = sum of plan quantity × unit price × plan FX / sum of plan quantity, across all revenue rows in the selected group, including rows not yet shown.")
+            if price_first:
+                notes.append("This report uses actual unit prices for the weighted price, weighted by plan quantities.")
+            if total_pq == 0:
+                notes.append("The group has zero planned quantity; its weighted unit price is set to zero.")
+        if sign == -1 and applies:
+            notes.append("Cost contribution is multiplied by −1 because this report bridges margin (revenue minus cost).")
+        if not applies:
+            notes.append("This effect does not apply to this account type; its contribution is zero.")
+        row["calculation"] = {
+            "label": {"price": "Price", "rate": "Cost rate", "efficiency": "Efficiency",
+                      "volume": "Volume", "mix": "Mix", "fx": "Exchange rates"}[leg],
+            "formula": formulas[leg] if applies else "Contribution = 0 (effect does not apply)",
+            "substitution": (("−1 × (" + substitutions[leg] + ")") if sign == -1 else substitutions[leg]) if applies else "0",
+            "inputs": inputs, "result": str(row["contribution"]), "unit": "USD", "notes": notes,
+        }
 
 
 class StatusRefused(ValueError):
