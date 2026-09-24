@@ -1,0 +1,396 @@
+{
+  "database": "fpa_cube",
+  "plan_version": "PV-2026-0001",
+  "plan_year": 2026,
+  "group_reporting_currency": "USD",
+  "dimension_columns": [
+    "billing_type",
+    "business_unit",
+    "channel",
+    "contract",
+    "cost_center",
+    "cost_pool",
+    "customer",
+    "delivery_shore",
+    "engine",
+    "funding_source",
+    "geo_country",
+    "geo_region",
+    "grade",
+    "intercompany_flag",
+    "practice",
+    "product",
+    "project",
+    "resource_employee",
+    "revenue_type"
+  ],
+  "signature_algorithm": "sha256(\"|\".join(f\"{dim}={value}\" for dim, value in zip(DIM_COLUMNS, values))).hexdigest()[:16]",
+  "separate_axes": [
+    "company",
+    "account",
+    "period_month"
+  ],
+  "companies": [
+    {
+      "company": "RTUS1",
+      "company_name": "RealTech US Operations 1",
+      "country_code": "US",
+      "region": "AMER",
+      "functional_currency": "USD"
+    },
+    {
+      "company": "RTUS2",
+      "company_name": "RealTech US Operations 2",
+      "country_code": "US",
+      "region": "AMER",
+      "functional_currency": "USD"
+    },
+    {
+      "company": "RTUS3",
+      "company_name": "RealTech US Operations 3",
+      "country_code": "US",
+      "region": "AMER",
+      "functional_currency": "USD"
+    },
+    {
+      "company": "RTCA1",
+      "company_name": "RealTech CA Operations 1",
+      "country_code": "CA",
+      "region": "AMER",
+      "functional_currency": "CAD"
+    },
+    {
+      "company": "RTCA2",
+      "company_name": "RealTech CA Operations 2",
+      "country_code": "CA",
+      "region": "AMER",
+      "functional_currency": "CAD"
+    },
+    {
+      "company": "RTUK1",
+      "company_name": "RealTech UK Operations 1",
+      "country_code": "UK",
+      "region": "EMEA",
+      "functional_currency": "GBP"
+    },
+    {
+      "company": "RTUK2",
+      "company_name": "RealTech UK Operations 2",
+      "country_code": "UK",
+      "region": "EMEA",
+      "functional_currency": "GBP"
+    },
+    {
+      "company": "RTDE1",
+      "company_name": "RealTech DE Operations 1",
+      "country_code": "DE",
+      "region": "EMEA",
+      "functional_currency": "EUR"
+    },
+    {
+      "company": "RTDE2",
+      "company_name": "RealTech DE Operations 2",
+      "country_code": "DE",
+      "region": "EMEA",
+      "functional_currency": "EUR"
+    },
+    {
+      "company": "RTPL1",
+      "company_name": "RealTech PL Operations 1",
+      "country_code": "PL",
+      "region": "EMEA",
+      "functional_currency": "PLN"
+    },
+    {
+      "company": "RTPL2",
+      "company_name": "RealTech PL Operations 2",
+      "country_code": "PL",
+      "region": "EMEA",
+      "functional_currency": "PLN"
+    },
+    {
+      "company": "RTPL3",
+      "company_name": "RealTech PL Operations 3",
+      "country_code": "PL",
+      "region": "EMEA",
+      "functional_currency": "PLN"
+    },
+    {
+      "company": "RTAE1",
+      "company_name": "RealTech AE Operations 1",
+      "country_code": "AE",
+      "region": "EMEA",
+      "functional_currency": "AED"
+    },
+    {
+      "company": "RTIN1",
+      "company_name": "RealTech IN Operations 1",
+      "country_code": "IN",
+      "region": "APAC",
+      "functional_currency": "INR"
+    },
+    {
+      "company": "RTIN2",
+      "company_name": "RealTech IN Operations 2",
+      "country_code": "IN",
+      "region": "APAC",
+      "functional_currency": "INR"
+    },
+    {
+      "company": "RTIN3",
+      "company_name": "RealTech IN Operations 3",
+      "country_code": "IN",
+      "region": "APAC",
+      "functional_currency": "INR"
+    },
+    {
+      "company": "RTSG1",
+      "company_name": "RealTech SG Operations 1",
+      "country_code": "SG",
+      "region": "APAC",
+      "functional_currency": "SGD"
+    },
+    {
+      "company": "RTSG2",
+      "company_name": "RealTech SG Operations 2",
+      "country_code": "SG",
+      "region": "APAC",
+      "functional_currency": "SGD"
+    },
+    {
+      "company": "RTAU1",
+      "company_name": "RealTech AU Operations 1",
+      "country_code": "AU",
+      "region": "APAC",
+      "functional_currency": "AUD"
+    },
+    {
+      "company": "RTAU2",
+      "company_name": "RealTech AU Operations 2",
+      "country_code": "AU",
+      "region": "APAC",
+      "functional_currency": "AUD"
+    }
+  ],
+  "accounts": [
+    {
+      "account": "41000",
+      "account_name": "Services Revenue - Time and Materials",
+      "account_type": "Revenue",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "41010",
+      "account_name": "Services Revenue - Fixed Fee",
+      "account_type": "Revenue",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "41020",
+      "account_name": "Services Revenue - Change Orders",
+      "account_type": "Revenue",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "41100",
+      "account_name": "Subscription Revenue",
+      "account_type": "Revenue",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "41200",
+      "account_name": "Usage Revenue",
+      "account_type": "Revenue",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "41300",
+      "account_name": "Support and Maintenance Revenue",
+      "account_type": "Revenue",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "41400",
+      "account_name": "Rebillable Expense Revenue",
+      "account_type": "Revenue",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "51000",
+      "account_name": "Delivery Payroll",
+      "account_type": "COGS",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "51050",
+      "account_name": "Delivery Bonus and Incentive",
+      "account_type": "COGS",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "51100",
+      "account_name": "Subcontractor Cost",
+      "account_type": "COGS",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "51200",
+      "account_name": "Cloud Hosting",
+      "account_type": "COGS",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "51250",
+      "account_name": "Third Party Software - Resold",
+      "account_type": "COGS",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "51300",
+      "account_name": "Rebillable Travel",
+      "account_type": "COGS",
+      "engine_tag": "Services"
+    },
+    {
+      "account": "51400",
+      "account_name": "Customer Support Payroll",
+      "account_type": "COGS",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "61000",
+      "account_name": "Sales Payroll",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "61100",
+      "account_name": "Marketing Programs",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "61200",
+      "account_name": "Sales Commission",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "62000",
+      "account_name": "Research and Development Payroll",
+      "account_type": "OpEx",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "62100",
+      "account_name": "Product Tooling",
+      "account_type": "OpEx",
+      "engine_tag": "Recurring"
+    },
+    {
+      "account": "63000",
+      "account_name": "General and Administrative Payroll",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "63100",
+      "account_name": "Facilities and Occupancy",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "63200",
+      "account_name": "Professional Fees",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "63300",
+      "account_name": "Software Subscriptions",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "64000",
+      "account_name": "Depreciation and Amortisation",
+      "account_type": "OpEx",
+      "engine_tag": "Shared"
+    },
+    {
+      "account": "51500",
+      "account_name": "Intercompany Delivery Cost",
+      "account_type": "COGS",
+      "engine_tag": "Shared"
+    }
+  ],
+  "cost_centers": [
+    "CC-AE-CLOU",
+    "CC-AE-CYBE",
+    "CC-AE-DATA",
+    "CC-AE-ERPD",
+    "CC-AE-MANA",
+    "CC-AE-PROD",
+    "CC-AU-CLOU",
+    "CC-AU-CYBE",
+    "CC-AU-DATA",
+    "CC-AU-ERPD",
+    "CC-AU-MANA",
+    "CC-AU-PROD",
+    "CC-CA-CLOU",
+    "CC-CA-CYBE",
+    "CC-CA-DATA",
+    "CC-CA-ERPD",
+    "CC-CA-MANA",
+    "CC-CA-PROD",
+    "CC-DE-CLOU",
+    "CC-DE-CYBE",
+    "CC-DE-DATA",
+    "CC-DE-ERPD",
+    "CC-DE-MANA",
+    "CC-DE-PROD",
+    "CC-IN-CLOU",
+    "CC-IN-CYBE",
+    "CC-IN-DATA",
+    "CC-IN-ERPD",
+    "CC-IN-MANA",
+    "CC-IN-PROD",
+    "CC-PL-CLOU",
+    "CC-PL-CYBE",
+    "CC-PL-DATA",
+    "CC-PL-ERPD",
+    "CC-PL-MANA",
+    "CC-PL-PROD",
+    "CC-SG-CLOU",
+    "CC-SG-CYBE",
+    "CC-SG-DATA",
+    "CC-SG-ERPD",
+    "CC-SG-MANA",
+    "CC-SG-PROD",
+    "CC-UK-CLOU",
+    "CC-UK-CYBE",
+    "CC-UK-DATA",
+    "CC-UK-ERPD",
+    "CC-UK-MANA",
+    "CC-UK-PROD",
+    "CC-US-CLOU",
+    "CC-US-CYBE",
+    "CC-US-DATA",
+    "CC-US-ERPD",
+    "CC-US-MANA",
+    "CC-US-PROD"
+  ],
+  "intercompany_cost_account": "51500",
+  "vintages": [
+    {
+      "vintage": 1,
+      "closed_at": "2026-07-05T18:00:00",
+      "note": "original Q2 close"
+    },
+    {
+      "vintage": 2,
+      "closed_at": "2026-08-12T09:30:00",
+      "note": "Q2 restatement"
+    }
+  ]
+}
