@@ -52,8 +52,12 @@ class FPATools:
         audit_logger: ExternalAuditLogger | None = None,
         drift_checker=None,
         reforecast_desk=None,
+        include_calculations: bool = False,
     ):
         self.drift_checker = drift_checker
+        self.include_calculations = include_calculations
+        self.calculation_rows = {}
+        self.execution_sql = {}
         # Present only for a human planner: what propose_reforecast resolves
         # words against (fpa_project.reforecast_requests.ReforecastDesk).
         self.reforecast_desk = reforecast_desk
@@ -106,12 +110,16 @@ class FPATools:
             return QueryToolResult(status="EXECUTION_ERROR", errors=[ToolError(code="NO_EXECUTOR", message="no ClickHouse executor configured")])
         try:
             log_event(self.logger, "clickhouse_execution_started")
+            execution_sql, descriptors = compiled.sql, []
+            if self.include_calculations:
+                from fpa_project.query_calculations import ratio_projection
+                execution_sql, descriptors = ratio_projection(compiled.sql, parse_query(dsl), self.schema)
             self.audit_logger.record(
                 "clickhouse",
                 "request",
-                {"sql": compiled.sql, "parameter_names": sorted(compiled.params)},
+                {"sql": execution_sql, "parameter_names": sorted(compiled.params)},
             )
-            raw_rows = list(self.executor(compiled.sql, compiled.params))
+            raw_rows = list(self.executor(execution_sql, compiled.params))
             self.masking_hook.after_tool(raw_rows, user_id=self.scope.user_id)
             # Mask after execution too: dimension values can contain hostile
             # or sensitive master-data text even when the query was safe.
@@ -120,7 +128,16 @@ class FPATools:
                 # the legs are what "explain a gap" means, and the arithmetic
                 # check then holds the narrative to these figures.
                 raw_rows = self._bridge_nodes(dsl, raw_rows)
-            rows = [mask_for_llm(dict(row)) for row in raw_rows]
+            from fpa_project.query_calculations import extract_ratio_calculations
+            rows, calculation_rows = [], []
+            for raw_row in raw_rows:
+                row = dict(raw_row)
+                calculations = extract_ratio_calculations(row, descriptors)
+                masked = mask_for_llm(row)
+                rows.append(masked)
+                calculation_rows.append({"row": masked, "calculations": mask_for_llm(calculations)})
+            self.calculation_rows[dsl] = calculation_rows
+            self.execution_sql[dsl] = execution_sql
             self.audit_logger.record("clickhouse", "response", {"rows": rows, "row_count": len(rows)})
             columns = list(rows[0]) if rows else []
             log_event(self.logger, "clickhouse_execution_completed", status="SUCCESS", row_count=len(rows))
@@ -132,7 +149,10 @@ class FPATools:
             return QueryToolResult(status="SUCCESS", rows=rows, columns=columns, row_count=len(rows), drift_flags=self.drift_flags,
                                    scope=sorted(self.scope.allowed_companies))
         except Exception as exc:
-            self.audit_logger.record("clickhouse", "response", {"status": "ERROR", "error_type": type(exc).__name__})
+            # The type alone does not identify the fault: a KeyError logged as
+            # just "KeyError" cost a long diagnosis of a broken bridge decode.
+            # The message names the column; it is cube metadata, never a row value.
+            self.audit_logger.record("clickhouse", "response", {"status": "ERROR", "error_type": type(exc).__name__, "error": str(exc)})
             log_event(self.logger, "clickhouse_execution_failed", status="EXECUTION_ERROR", error_type=type(exc).__name__)
             return QueryToolResult(status="EXECUTION_ERROR", errors=[ToolError(code="EXECUTION_ERROR", message=str(exc))])
 

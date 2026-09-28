@@ -312,6 +312,22 @@ def plan_lines(plan_version_code: str, limit: int = 200, offset: int = 0) -> dic
     }
 
 
+def countries_of(companies: frozenset[str] | set[str]) -> frozenset[str]:
+    """The countries a set of companies sits in, read from dim_company.
+
+    Read rather than parsed out of the company code: the codes happen to carry
+    the country today, but an authorisation decision that rests on a naming
+    convention breaks silently the first time one does not.
+    """
+    if not companies:
+        return frozenset()
+    with engine().begin() as conn:
+        return frozenset(conn.execute(
+            text(f"SELECT DISTINCT country_code FROM {SCHEMA}.dim_company WHERE company_code = ANY(:codes)"),
+            {"codes": sorted(companies)},
+        ).scalars())
+
+
 def list_plan_versions() -> list[dict[str, Any]]:
     with engine().begin() as conn:
         rows = conn.execute(

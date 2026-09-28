@@ -70,6 +70,11 @@ class UserScope(BaseModel):
 
     user_id: str = Field(min_length=1)
     allowed_companies: frozenset[str] | None = None
+    # The countries those companies sit in, resolved from dim_company by the
+    # caller. Kept beside the companies rather than derived from their codes:
+    # an authorisation decision should not rest on a naming convention.
+    # None means "not resolved", which the country guard treats as no claim.
+    allowed_countries: frozenset[str] | None = None
     max_estimated_rows: int = Field(default=1_000_000, ge=1)
 
 
@@ -87,6 +92,10 @@ class AgentFPAResponse(BaseModel):
     assumptions: list[str] = Field(default_factory=list)
     cited_data_rows: list[dict[str, Any]] = Field(default_factory=list)
     error_message: str | None = None
+    # Why an OUT_OF_SCOPE was returned. The status alone covers two unrelated
+    # cases — a question the cube cannot answer, and a country this caller may
+    # not see — and a reader needs to be told which. None on every other status.
+    refusal_reason: Literal["NOT_IN_CUBE", "COUNTRY_NOT_AUTHORIZED"] | None = None
     # The team member (stable Agno id) whose output carried the executed DSL,
     # and the leader/member delegation it came out of. Set on team runs only.
     produced_by: str | None = None

@@ -14,12 +14,31 @@ SELECT <measure>[ AS alias][, ...] [BY <dimension>, ...]
 Measures are aggregated by the compiler. Time functions: YOY(measure), PRIOR(measure, n), ROLLING(expr, n).
 Semi-additive measures (headcount) need a single closing period. AS OF selects the sealed ledger vintage, including for plan comparisons.
 Actuals cover 2025-2026; plan PV-2026-0001 covers 2026 only. Call list_metrics and list_dimensions for valid names.
-Examples:
+Examples, as intent -> query. Match the question to the closest pattern; the intent line is a comment, never part of dsl.
+# plain figure for a slice
 SELECT services_revenue BY practice FOR PERIOD 2026-Q2
-SELECT gross_margin_pct BY geo_region FOR PERIOD 2026-H1
-SELECT delivery_cost WHERE geo_country = 'PL' FOR PERIOD 2026-Q2 AS OF '2026-07-05T18:00:00'
-SELECT services_revenue BY practice FOR PERIOD 2026-Q2 COMPARE PLAN pv='PV-2026-0001', scenario='base' TO ACTUAL BRIDGE
-SELECT YOY(services_revenue) BY practice FOR PERIOD 2026-Q2"""
+# a gap and what drove it (price, volume, mix, fx, rate, efficiency legs): BRIDGE, never separate queries
+SELECT services_revenue BY practice, geo_country WHERE geo_country = 'PL' AND engine = 'Services' FOR PERIOD 2026-Q2 COMPARE PLAN pv='PV-2026-0001' TO ACTUAL BRIDGE
+# what the books said at an earlier close, before later restatements: AS OF
+SELECT delivery_cost BY company, practice WHERE geo_region = 'EMEA' FOR PERIOD 2026-Q2 AS OF '2026-07-05T18:00:00'
+# ratio measures; the compiler recomputes them from their components, never averages them
+SELECT utilisation, gross_margin_pct BY practice WHERE geo_country = 'PL' AND delivery_shore != 'Offshore' FOR PERIOD 2026-Q2 LIMIT 50
+# growth against the same period last year
+SELECT YOY(services_revenue) BY practice WHERE engine = 'Services' FOR PERIOD 2026-Q1
+# intercompany trade, by entity and account
+SELECT services_revenue, subcontractor_cost BY company, account WHERE intercompany_flag = 'Yes' FOR PERIOD 2026-H1
+# ranking entities on a cost, several values on one dimension
+SELECT subcontractor_cost BY company, geo_region WHERE geo_region IN ('EMEA', 'AMER') FOR PERIOD 2026-H1 LIMIT 20
+# trailing average across a period range, against a named scenario
+SELECT ROLLING(bookings, 3) BY practice WHERE practice = 'Data Platform' FOR PERIOD 2026-Q1..2026-Q4 COMPARE PLAN pv='PV-2026-0001', scenario='downside' TO ACTUAL
+# splitting a cost by how and by whom it was delivered
+SELECT delivery_cost BY delivery_shore, grade WHERE geo_region = 'EMEA' FOR PERIOD 2026-Q2
+# actual against a non-base scenario
+SELECT services_revenue BY customer WHERE engine = 'Services' FOR PERIOD 2026-H1 COMPARE PLAN pv='PV-2026-0001', scenario='stretch' TO ACTUAL LIMIT 25
+# excluding values on a dimension; the fx leg of a BRIDGE is where currency movement lands
+SELECT services_revenue, gross_margin BY company, geo_country WHERE geo_country NOT IN ('US') FOR PERIOD 2026-Q2 COMPARE PLAN pv='PV-2026-0001' TO ACTUAL BRIDGE
+Amounts are in functional currency; there is no currency dimension and no reporting-currency measure, so a question
+asking to restate into another currency is out of scope. A question about currency *impact* is the BRIDGE fx leg."""
 
 
 REFORECAST_GUIDE = """
@@ -83,6 +102,8 @@ def build_agno_team(model=None, toolset=None, *, disclosure_writer=None, single=
         "Do not say in explanation which entities, countries or scope the figures cover, and do not mention the "
         "caller's scope at all: you cannot see the entity list or the filters the compiler applied, and a "
         "country-filtered figure called the caller's whole scope is a much larger number than the one returned. "
+        "Write countries by name, never by code: say Germany, not DE; Poland, not PL; the United Kingdom, not UK. "
+        "Never quote a dimension filter back as written (no \"geo_country = DE\"); say what it means in words. "
         "Coverage is stated for you in the assumptions. Describe only what the figures are, and never describe "
         "anything as zero, empty or having no activity unless a returned row says so.\n\n"
         + FINOPSEXPR_GUIDE

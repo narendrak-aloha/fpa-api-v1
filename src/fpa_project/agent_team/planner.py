@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from fpa_project.countries import country_name, refusal_text, requested_countries
 from fpa_project.dsl.parser import parse_query
 
 from .masking import mask_for_llm, mask_request_text
@@ -88,6 +89,18 @@ def validate_dsl(dsl: str, registry: PlanningRegistry | None = None) -> list[Val
     return [ValidationIssue(code=i.code, message=i.message, field=i.field) for i in registry.validate(query)]
 
 
+
+# Coverage is assembled from the DSL that ran, so it would otherwise read back
+# the compiler's own identifiers. Only geo_country carries a country code, and
+# only its field name has a plainer word; every other dimension is already
+# written the way a reader would say it.
+_READABLE_FIELDS = {"geo_country": "country"}
+
+
+def _readable_predicate(field: str, operator: str, values: list[str]) -> str:
+    shown = [country_name(v) for v in values] if field == "geo_country" else values
+    return f"{_READABLE_FIELDS.get(field, field)} {operator.lower()} " + ", ".join(shown)
+
 class FinOpsPlanner:
     """Safe boundary for an Agno team's proposed plan.
 
@@ -163,7 +176,20 @@ class FPAOrchestrator:
             ok, _ = self.arithmetic_hook.verify(result.plan.explanation, [], dsl)
             explanation = result.plan.explanation if ok else "This question cannot be answered from the FP&A cube."
             log_event(self.logger, "request_out_of_scope", run_id=run_id, status="OUT_OF_SCOPE")
-            return AgentFPAResponse(user_query=prepared.request, execution_status="OUT_OF_SCOPE", narrative_explanation=explanation, assumptions=assumptions)
+            return AgentFPAResponse(user_query=prepared.request, execution_status="OUT_OF_SCOPE", narrative_explanation=explanation,
+                                    assumptions=assumptions, refusal_reason="NOT_IN_CUBE")
+        refused = self.unauthorised_countries(dsl)
+        if refused:
+            # An access-control decision, taken before anything is compiled or
+            # run. Executing and letting the scope filter empty the result
+            # would answer "0.00", which reads as "Germany billed nothing"
+            # rather than "you cannot see Germany" — a different claim, and a
+            # false one.
+            log_event(self.logger, "country_out_of_scope", run_id=run_id, status="OUT_OF_SCOPE")
+            return AgentFPAResponse(
+                user_query=prepared.request, generated_dsl=dsl, execution_status="OUT_OF_SCOPE",
+                narrative_explanation=refusal_text(refused), refusal_reason="COUNTRY_NOT_AUTHORIZED",
+            )
         # FPATools injects authenticated scope, compiles parameterized SQL and
         # masks result rows before they are returned to this orchestrator.
         query_result = self.tools.run_finops_query(dsl)
@@ -186,6 +212,23 @@ class FPAOrchestrator:
         log_event(self.logger, "response_completed", run_id=run_id, status="SUCCESS", row_count=query_result.row_count)
         return AgentFPAResponse(user_query=prepared.request, generated_dsl=dsl, execution_status="SUCCESS", narrative_explanation=narrative, assumptions=assumptions, cited_data_rows=query_result.rows, drift_flags=self.tools.drift_flags)
 
+    def unauthorised_countries(self, dsl: str) -> list[str]:
+        """Countries the query names outright that this caller may not see.
+
+        Sorted country codes, empty when there is nothing to refuse. The scope
+        has to have been resolved for this to say anything: an unresolved
+        scope makes no claim either way, and the compiler's company filter
+        still applies, so nothing widens.
+        """
+        allowed = self.tools.scope.allowed_countries
+        if allowed is None:
+            return []
+        try:
+            asked = requested_countries(dsl)
+        except Exception:  # noqa: BLE001 - an unparseable DSL is the compiler's refusal to make
+            return []
+        return sorted(asked - allowed)
+
     def coverage(self, dsl: str) -> str:
         """What the figures cover, assembled rather than described.
 
@@ -200,8 +243,7 @@ class FPAOrchestrator:
         within = f"within your entity scope of {len(companies)} companies ({', '.join(companies)})"
         if not dsl:
             return f"No figures were read; your entity scope is {len(companies)} companies ({', '.join(companies)})."
-        filters = [f"{c.field} {c.operator.lower()} "
-                   + ", ".join(str(v.value) for v in c.values)
+        filters = [_readable_predicate(c.field, c.operator, [str(v.value) for v in c.values])
                    for c in parse_query(dsl).predicates
                    if c.field in self.tools.schema.dimensions]
         if not filters:

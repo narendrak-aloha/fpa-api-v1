@@ -81,24 +81,30 @@ def test_practice_mix_and_grade_mix_are_separate_non_zero_legs(poland):
 
 
 def test_every_leg_is_exercised_on_the_poland_cut(poland):
-    """Rate erosion, a volume miss and a pyramid shift are material; FX is not.
+    """Price, volume, mix and FX all move on this cut, and FX is the real sum.
 
-    The zloty sat below the assumed 0.2545 in April (0.25142) and May
-    (0.25337) and above it in June (0.25844). On the ~400 matched lines those
-    moves very nearly cancel, leaving about +332 USD against a -289k gap —
-    checked against the cube directly, summing amount_functional x (actual
-    rate - plan rate) over the same matched set.
+    A leg that is *zero* would mean it is not being computed at all, which is
+    what the non-zero assertions guard.
 
-    So FX is asserted non-zero rather than material. A currency leg that is
-    small because the rates crossed mid-quarter is a fact about the books; one
-    that is *zero* would mean the leg is not being computed at all, and that is
-    what this guards.
+    FX is checked by recomputing it, not by pinning its size. An earlier
+    version asserted the leg netted under 1% of the gap, which held only for
+    one particular seeded rate curve: the seeder phased its FX drift with
+    hash(ccy), Python salts string hashing per process, and so every cube
+    rebuild moved the rates and eventually broke the threshold. The identity
+    below -- the leg equals the actual local amount times (real rate minus
+    assumed rate), summed over the same matched lines -- is what the leg
+    *means*, and holds whatever the rates happen to be.
     """
     root = poland.result.root
+    for leg in ("price", "volume", "mix", "fx"):
+        assert getattr(root, leg) != 0, f"the {leg} leg is not being computed"
     for leg in ("price", "volume", "mix"):
         assert abs(getattr(root, leg)) > Decimal("1000"), f"{leg} is suspiciously small: {getattr(root, leg)}"
-    assert root.fx != 0, "the currency leg is not being computed"
-    assert abs(root.fx) < abs(root.gap) / 100, "FX nets small on this cut; a large one means the rates changed"
+    recomputed = sum(
+        Decimal(str(c["actual_amount"])) * (Decimal(str(c["actual_fx"])) - Decimal(str(c["plan_fx"])))
+        for c in poland.citations
+    )
+    assert root.fx == recomputed, "the FX leg is not the currency movement on the matched lines"
     # It is a miss.
     assert root.gap < 0
 

@@ -381,5 +381,60 @@ def test_every_answer_states_the_scope_it_was_limited_to():
     # not the caller's whole scope, and saying only the scope implies it is.
     coverage = [a for a in response.assumptions if a.startswith("Figures cover")]
     assert coverage, response.assumptions
-    assert "geo_country = DE" in coverage[0]
+    assert "country = Germany" in coverage[0]
     assert "RTPL1, RTPL2" in coverage[0]
+    # The code the compiler filtered on never reaches the reader, nor does the
+    # cube's own name for the column.
+    assert "DE" not in coverage[0].replace("RTPL1", "").replace("RTPL2", "")
+    assert "geo_country" not in coverage[0]
+
+
+def test_a_country_outside_scope_is_refused_before_any_sql_runs():
+    """An access-control decision, not a query that happens to return nothing.
+
+    Answering 0.00 for Germany would be a claim about Germany's revenue. The
+    caller cannot see Germany at all, so there is no figure to report.
+    """
+    ran = []
+    tools = FPATools(
+        scope=UserScope(user_id="analyst", allowed_companies=frozenset({"RTPL1", "RTPL2"}),
+                        allowed_countries=frozenset({"PL"})),
+        executor=lambda sql, params: ran.append(sql) or [],
+    )
+    dsl = "SELECT services_revenue WHERE geo_country = 'DE' FOR PERIOD 2026-H2"
+    response = FPAOrchestrator(tools).finalize(
+        PlanningRequest(request="What is the service revenue for Germany for the second half?"),
+        {"dsl": dsl, "explanation": "Germany revenue."},
+    )
+    assert response.execution_status == "OUT_OF_SCOPE"
+    assert response.narrative_explanation == "You are not authorized to view the Germany country OUT of SCOPE"
+    # Nothing was executed and no figure was returned.
+    assert ran == []
+    assert response.cited_data_rows == []
+
+
+def test_a_country_inside_scope_still_runs():
+    tools = FPATools(
+        scope=UserScope(user_id="analyst", allowed_companies=frozenset({"RTPL1"}),
+                        allowed_countries=frozenset({"PL"})),
+        executor=lambda sql, params: [{"services_revenue": 1.0}],
+    )
+    response = FPAOrchestrator(tools).finalize(
+        PlanningRequest(request="Poland services revenue"),
+        {"dsl": "SELECT services_revenue WHERE geo_country = 'PL' FOR PERIOD 2026-H2", "explanation": "Poland."},
+    )
+    assert response.execution_status == "SUCCESS"
+
+
+def test_excluding_a_country_is_not_a_request_to_see_it():
+    """`!=` asks about everywhere else, so it needs no authorisation of its own."""
+    tools = FPATools(
+        scope=UserScope(user_id="analyst", allowed_companies=frozenset({"RTPL1"}),
+                        allowed_countries=frozenset({"PL"})),
+        executor=lambda sql, params: [{"services_revenue": 1.0}],
+    )
+    response = FPAOrchestrator(tools).finalize(
+        PlanningRequest(request="revenue outside Germany"),
+        {"dsl": "SELECT services_revenue WHERE geo_country != 'DE' FOR PERIOD 2026-H2", "explanation": "Elsewhere."},
+    )
+    assert response.execution_status == "SUCCESS"

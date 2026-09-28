@@ -40,11 +40,9 @@ TERMINAL = {"CONTROLLER_REJECTED", "COVENANT_FAILED", "PUBLISHED", "CFO_REJECTED
             "COMPENSATED", "FAILED"}
 
 # Names a planner is likely to type, to the country codes dim_company uses.
-COUNTRY_NAMES = {
-    "poland": "PL", "germany": "DE", "united kingdom": "UK", "great britain": "UK", "britain": "UK", "gb": "UK",
-    "united states": "US", "usa": "US", "america": "US", "india": "IN", "singapore": "SG",
-    "australia": "AU", "canada": "CA", "uae": "AE", "united arab emirates": "AE",
-}
+# Shared with the response formatting so a name resolved here and a name shown
+# back to the reader cannot drift apart.
+from fpa_project.countries import COUNTRY_NAMES  # noqa: E402
 
 
 @dataclass
