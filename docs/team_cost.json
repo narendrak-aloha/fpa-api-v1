@@ -1,0 +1,123 @@
+{
+  "measured_at": "2026-09-25T15:25:13+00:00",
+  "provider": "claude-code",
+  "repeats": 1,
+  "summary": [
+    {
+      "mode": "single",
+      "runs": 3,
+      "success": 2,
+      "median_seconds": 33.6,
+      "median_model_calls": 2,
+      "median_input_tokens": 8,
+      "median_output_tokens": 2347,
+      "median_cache_read_input_tokens": 27120,
+      "median_cache_creation_input_tokens": 3666,
+      "median_total_tokens": 33143
+    },
+    {
+      "mode": "team",
+      "runs": 3,
+      "success": 3,
+      "median_seconds": 36.9,
+      "median_model_calls": 4,
+      "median_input_tokens": 14,
+      "median_output_tokens": 2469,
+      "median_cache_read_input_tokens": 60424,
+      "median_cache_creation_input_tokens": 12337,
+      "median_total_tokens": 75244
+    }
+  ],
+  "runs": [
+    {
+      "mode": "single",
+      "question": "Why did Poland miss its services revenue plan in Q2 2026? By practice.",
+      "status": "SUCCESS",
+      "dsl": "SELECT services_revenue BY practice WHERE geo_country = 'PL' FOR PERIOD 2026-Q2 COMPARE PLAN pv='PV-2026-0001', scenario='base' TO ACTUAL BRIDGE",
+      "produced_by": "fpa-single",
+      "attempts": 1,
+      "seconds": 33.62,
+      "model_calls": 2,
+      "input_tokens": 8,
+      "output_tokens": 2370,
+      "cache_read_input_tokens": 44865,
+      "cache_creation_input_tokens": 4553,
+      "total_tokens": 51796
+    },
+    {
+      "mode": "team",
+      "question": "Why did Poland miss its services revenue plan in Q2 2026? By practice.",
+      "status": "SUCCESS",
+      "dsl": "SELECT services_revenue BY practice WHERE geo_country = 'PL' FOR PERIOD 2026-Q2 COMPARE PLAN pv='PV-2026-0001', scenario='base' TO ACTUAL BRIDGE",
+      "produced_by": "fpa-variance",
+      "attempts": 1,
+      "seconds": 61.24,
+      "model_calls": 4,
+      "input_tokens": 14,
+      "output_tokens": 5682,
+      "cache_read_input_tokens": 62291,
+      "cache_creation_input_tokens": 14509,
+      "total_tokens": 82496
+    },
+    {
+      "mode": "single",
+      "question": "What was services revenue by practice in Q2 2026?",
+      "status": "SUCCESS",
+      "dsl": "SELECT services_revenue BY practice FOR PERIOD 2026-Q2",
+      "produced_by": "fpa-single",
+      "attempts": 1,
+      "seconds": 16.02,
+      "model_calls": 2,
+      "input_tokens": 6,
+      "output_tokens": 751,
+      "cache_read_input_tokens": 11225,
+      "cache_creation_input_tokens": 1900,
+      "total_tokens": 13882
+    },
+    {
+      "mode": "team",
+      "question": "What was services revenue by practice in Q2 2026?",
+      "status": "SUCCESS",
+      "dsl": "SELECT services_revenue BY practice FOR PERIOD 2026-Q2",
+      "produced_by": "fpa-team",
+      "attempts": 1,
+      "seconds": 19.3,
+      "model_calls": 2,
+      "input_tokens": 8,
+      "output_tokens": 1275,
+      "cache_read_input_tokens": 47343,
+      "cache_creation_input_tokens": 3692,
+      "total_tokens": 52318
+    },
+    {
+      "mode": "single",
+      "question": "Delivery cost in Poland for Q2 2026 as of the July close (2026-07-05T18:00:00)",
+      "status": "VALIDATION_ERROR",
+      "dsl": "SELECT delivery_cost WHERE geo_country = 'PL' FOR PERIOD 2026-Q2 AS OF '2026-07-05T18:00:00'",
+      "produced_by": "fpa-single",
+      "attempts": 2,
+      "seconds": 35.11,
+      "model_calls": 3,
+      "input_tokens": 10,
+      "output_tokens": 2347,
+      "cache_read_input_tokens": 27120,
+      "cache_creation_input_tokens": 3666,
+      "total_tokens": 33143
+    },
+    {
+      "mode": "team",
+      "question": "Delivery cost in Poland for Q2 2026 as of the July close (2026-07-05T18:00:00)",
+      "status": "SUCCESS",
+      "dsl": "SELECT delivery_cost WHERE geo_country = 'PL' FOR PERIOD 2026-Q2 AS OF '2026-07-05T18:00:00'",
+      "produced_by": "fpa-query",
+      "attempts": 1,
+      "seconds": 36.92,
+      "model_calls": 4,
+      "input_tokens": 14,
+      "output_tokens": 2469,
+      "cache_read_input_tokens": 60424,
+      "cache_creation_input_tokens": 12337,
+      "total_tokens": 75244
+    }
+  ]
+}
