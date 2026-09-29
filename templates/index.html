@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FP&amp;A Query</title>
+<style>
+:root{--paper:#FCFBF8;--paper2:#F5F3ED;--paper3:#EFEDE5;--ink:#17171A;--ink2:#3D3D42;--muted:#6E6E75;--rule:#E4E1D8;--accent:#2B4C7E;--ok:#2F6B4F;--warn:#9A3B26;
+--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink2);font-family:var(--sans);line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:40px 16px 80px}
+h1{font-size:1.8rem;color:var(--ink);font-weight:500}
+.sub{color:var(--muted);margin:4px 0 24px}
+.hidden{display:none !important}
+
+/* Question */
+.ask{background:#fff;border:1px solid var(--rule);padding:16px}
+textarea,input[type=text]{width:100%;padding:12px;border:1px solid var(--rule);font:15px var(--sans);background:var(--paper);color:var(--ink)}
+textarea:focus,input[type=text]:focus{outline:2px solid rgba(43,76,126,.25);border-color:var(--accent)}
+.bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px}
+.lbl{font-size:13px;color:var(--muted);margin-right:6px}
+.seg{display:inline-flex;border:1px solid var(--rule);flex-wrap:wrap}
+.seg label{padding:7px 12px;cursor:pointer;font-size:13.5px;background:var(--paper2);color:var(--muted)}
+.seg input{display:none}
+.seg label:has(input:checked){background:var(--accent);color:#fff}
+.seg label.off{opacity:.5}
+button{padding:10px 22px;border:1px solid var(--accent);background:var(--accent);color:#fff;font:500 15px var(--sans);cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+.more{margin-top:10px;font-size:13.5px}
+.more summary{cursor:pointer;color:var(--muted)}
+.more .hint{color:var(--muted);font-size:12.5px;margin:6px 0}
+
+/* Examples */
+.examples{margin-top:18px}
+.examples h2{font:500 13px var(--sans);color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{background:#fff;color:var(--accent);border:1px solid var(--rule);font-size:13px;padding:5px 11px}
+.chip.code{font-family:var(--mono);font-size:12px}
+
+/* Waiting */
+.wait{margin-top:24px;padding:16px;background:#fff;border:1px solid var(--rule);color:var(--muted)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--rule);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+
+/* Answer */
+.answer{margin-top:24px;background:#fff;border:1px solid var(--rule);border-left:4px solid var(--ok);padding:20px}
+.answer.bad{border-left-color:var(--warn)}
+.answer.neutral{border-left-color:var(--muted)}
+.answer .q{font-size:13px;color:var(--muted);margin-bottom:6px}
+.answer .title{font-size:1.05rem;color:var(--ink);font-weight:600;margin-bottom:6px}
+.answer .text{font-size:1.05rem;color:var(--ink);white-space:pre-wrap}
+.answer .note{margin-top:8px;color:var(--warn);font-size:14px}
+.figures{margin-top:16px}
+.figures h3{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.tw{overflow-x:auto;max-height:420px;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{position:sticky;top:0;background:var(--paper3);text-align:left;padding:8px 12px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:7px 12px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums}
+.explainBtn{margin-top:16px;background:#fff;color:var(--accent);font-size:14px;padding:8px 16px}
+
+/* Explanation (debug) */
+.explain{margin-top:12px;background:#fff;border:1px solid var(--rule)}
+.explain>header{padding:12px 20px;background:var(--paper3);border-bottom:1px solid var(--rule)}
+.explain>header strong{color:var(--ink)}
+.explain>header p{font-size:13px;color:var(--muted)}
+.step{padding:16px 20px;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:28px 1fr;gap:10px}
+.step:last-child{border-bottom:0}
+.num{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font:600 12px var(--sans);display:flex;align-items:center;justify-content:center}
+.step h4{color:var(--ink);font-size:15px;font-weight:600}
+.step .why{font-size:13.5px;color:var(--muted);margin:2px 0 10px}
+.step ul{margin-left:18px}
+dl.parts{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:14px}
+dl.parts dt{color:var(--muted)}
+dl.parts dd{color:var(--ink)}
+.codeLbl{font-size:12.5px;color:var(--muted);margin:12px 0 4px}
+pre{font:12.5px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word;background:var(--paper2);padding:12px;color:var(--ink)}
+.params{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.params span{font:12px var(--mono);background:var(--paper2);border:1px solid var(--rule);padding:2px 8px}
+.params b{color:var(--muted);font-weight:400}
+details.raw{margin-top:10px;font-size:13px}
+details.raw summary{cursor:pointer;color:var(--muted)}
+@media (max-width:560px){dl.parts{grid-template-columns:1fr}dl.parts dd{margin-bottom:6px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FP&amp;A Query</h1>
+    <p class="sub">Ask a question about the company's finances in plain English.</p>
+  </header>
+
+  <section class="ask" aria-label="Identity">
+    <label for="token">Bearer token</label>
+    <input id="token" type="password" autocomplete="off" placeholder="Enter your token">
+    <button id="identify">Check identity</button><p id="identity" role="status"></p>
+  </section>
+  <!-- 1. The question -->
+  <section class="ask" aria-label="Ask a question">
+    <textarea id="q" rows="3" placeholder="e.g. What was services revenue by practice in Q2 2026?"></textarea>
+    <div class="bar">
+      <div>
+        <span class="lbl">Answer using</span>
+        <div class="seg" id="providers">
+          <label data-p="claude-code" title="Uses your Claude Code login, no API key needed"><input type="radio" name="provider" value="claude-code" checked>Claude (subscription)</label>
+          <label data-p="claude-api" title="Needs ANTHROPIC_API_KEY"><input type="radio" name="provider" value="claude-api">Claude API key</label>
+          <label data-p="gemini" title="Needs GOOGLE_API_KEY"><input type="radio" name="provider" value="gemini">Gemini</label>
+        </div>
+      </div>
+      <button id="go">Ask</button>
+    </div>
+    <details class="more">
+      <summary>More options</summary>
+      <p class="hint">Only include these companies. Leave empty to include all of them.</p>
+      <input type="text" id="companies" placeholder="Company codes, comma-separated, e.g. RTUS1, RTUK1">
+    </details>
+  </section>
+
+  <section class="examples" aria-label="Examples">
+    <h2>Try one of these</h2>
+    <div class="chips" id="chips"></div>
+    <h2>Quick test, no AI needed</h2>
+    <div class="chips" id="directChips"></div>
+  </section>
+
+  <!-- 2. Waiting -->
+  <div id="loading" class="wait hidden"><span class="spin"></span>Working on your answer. This usually takes 30–60 seconds.</div>
+
+  <!-- 3. The answer -->
+  <section id="answer" class="answer hidden" aria-live="polite">
+    <p class="q" id="askedQ"></p>
+    <p class="title" id="aTitle"></p>
+    <p class="text" id="aText"></p>
+    <p class="note" id="aNote"></p>
+    <h3>FinOpsExpr</h3><pre id="answerDsl"></pre>
+    <p id="proposalStatus"></p><pre id="driftFlags"></pre>
+    <button id="showBridge">Run variance bridge from this DSL</button>
+    <div class="figures" id="figures">
+      <h3>Figures</h3>
+      <div class="tw"><table id="tbl"></table></div>
+    </div>
+    <button class="explainBtn" id="explainBtn" aria-expanded="false" aria-controls="explain">Explain this answer (debug)</button>
+  </section>
+
+  <section class="answer" aria-label="Variance bridge">
+    <h2>Variance bridge · USD</h2>
+    <p id="bridgeStatus" role="status">Run a query ending in BRIDGE, then open its bridge.</p>
+    <div id="waterfall"></div><div id="bridgeNodes"></div>
+    <pre id="citationRows"></pre>
+  </section>
+  <section class="answer" aria-label="Plan governance">
+    <h2>Plan and re-forecast</h2>
+    <label for="planCode">Plan version</label><input type="text" id="planCode" value="PV-2026-0001">
+    <div class="bar"><button id="loadPlan">Load</button><button id="createPlan">Create draft</button></div>
+    <pre id="planState"></pre>
+    <label for="reviewNote">Review note</label><input type="text" id="reviewNote">
+    <div class="bar"><button id="passCovenant">Record covenant pass</button><button id="failCovenant">Record covenant breach</button></div>
+    <div class="bar"><button data-transition="IN_REVIEW">Submit for review</button><button data-transition="APPROVED">Approve plan</button><button data-transition="REJECTED">Reject plan</button><button data-transition="LOCKED">Lock plan</button></div>
+    <label for="driverCode">Driver</label><input type="text" id="driverCode" value="utilisation">
+    <label for="fromValue">Current value</label><input id="fromValue" type="number" value="0.75" step="0.01" min="0.000001">
+    <label for="toValue">Proposed value</label><input id="toValue" type="number" value="0.74" step="0.01" min="0.000001">
+    <div class="bar"><button id="startRun">Re-forecast</button><button id="watchRun">Watch progress</button><button id="stopWatch">Stop watching</button></div>
+    <progress id="runMeter" max="1" value="0"></progress><pre id="runProgress" aria-live="polite"></pre>
+    <p>Review the successor's covenant before approving the run. Load the successor using the button below, record the verdict, then approve.</p>
+    <div class="bar"><button id="loadSuccessor">Load successor</button><button id="approveRun">Approve run</button><button id="rejectRun">Reject run</button><button id="cancelRun">Cancel run</button></div>
+    <h3>Agent proposal review</h3>
+    <label for="proposalId">Proposal ID</label><input id="proposalId" type="text">
+    <div class="bar"><button id="readProposal">Review draft</button><button id="approveProposal">Approve proposal</button><button id="rejectProposal">Reject proposal</button></div>
+    <pre id="proposalDetails"></pre>
+    <p id="actionStatus" role="status"></p>
+  </section>
+
+  <!-- 4. How the answer was worked out: hidden until asked for -->
+  <section id="explain" class="explain hidden" aria-label="How this answer was worked out">
+    <header>
+      <strong>How this answer was worked out</strong>
+      <p>Each step the system took, from your question to the figures above.</p>
+    </header>
+
+    <div class="step">
+      <span class="num">1</span>
+      <div>
+        <h4>What was assumed</h4>
+        <p class="why">Where the question left something open, these choices were made.</p>
+        <ul id="assumptions"></ul>
+      </div>
+    </div>
+
+    <div class="step" id="stepUnderstood">
+      <span class="num">2</span>
+      <div>
+        <h4>How your question was understood</h4>
+        <p class="why">Your question was turned into a short, precise request for data.</p>
+        <dl class="parts" id="parts"></dl>
+        <p class="codeLbl">Written in the query language (FinOpsExpr):</p>
+        <pre id="dsl"></pre>
+      </div>
+    </div>
+
+    <div class="step" id="stepSql">
+      <span class="num">3</span>
+      <div>
+        <h4>What was run on the database</h4>
+        <p class="why">That request became this database query (SQL). Placeholders such as <code>{p0:String}</code> are filled with the values listed below. The values are sent separately, so nothing typed in a question can change the query itself.</p>
+        <pre id="sql"></pre>
+        <p class="codeLbl">Values used:</p>
+        <div class="params" id="params"></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <span class="num">4</span>
+      <div>
+        <h4>Details</h4>
+        <dl class="parts" id="details"></dl>
+        <details class="raw">
+          <summary>Full technical response</summary>
+          <pre id="raw"></pre>
+        </details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const examples = [
+  "What was services revenue by practice in Q2 2026?",
+  "Show gross margin % by geo region for 2026-Q2",
+  "Delivery cost by country for Q2 2026",
+  "Compare base plan vs actual services revenue by company for 2026-Q2",
+];
+const directExamples = ["SELECT services_revenue BY company FOR PERIOD 2026-Q2"];
+const PROVIDER_NAMES = {"claude-code": "Claude (subscription)", "claude-api": "Claude API key", "gemini": "Gemini"};
+const $ = id => document.getElementById(id);
+const el = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+
+// ---- Setup ----
+try { const saved = localStorage.getItem("fpa-provider"); const r = saved && document.querySelector(`input[value="${saved}"]`); if (r) r.checked = true; } catch {}
+document.querySelectorAll('input[name="provider"]').forEach(r => r.onchange = () => { try { localStorage.setItem("fpa-provider", r.value); } catch {} });
+fetch("/api/v1/providers").then(r => r.json()).then(list => list.forEach(p => {
+  const l = document.querySelector(`label[data-p="${p.id}"]`);
+  if (l && !p.configured) { l.classList.add("off"); l.title = "Not set up on this server"; }
+})).catch(() => {});
+
+function addChips(target, list, cls) {
+  list.forEach(e => { const b = el("button", e, cls); b.onclick = () => { $("q").value = e; ask(); }; $(target).appendChild(b); });
+}
+addChips("chips", examples, "chip");
+addChips("directChips", directExamples, "chip code");
+
+$("go").onclick = ask;
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
+$("explainBtn").onclick = () => {
+  const open = $("explain").classList.toggle("hidden") === false;
+  $("explainBtn").setAttribute("aria-expanded", open);
+  $("explainBtn").textContent = open ? "Hide explanation" : "Explain this answer (debug)";
+  if (open) $("explain").scrollIntoView({behavior: "smooth", block: "start"});
+};
+
+// ---- Asking ----
+async function ask() {
+  const query = $("q").value.trim();
+  if (!query) return;
+  const companies = $("companies").value.split(",").map(s => s.trim()).filter(Boolean);
+  $("go").disabled = true;
+  $("loading").classList.remove("hidden");
+  $("answer").classList.add("hidden");
+  $("explain").classList.add("hidden");
+  try {
+    const res = await fetch("/api/v1/query", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Authorization": `Bearer ${$("token").value.trim()}`},
+      body: JSON.stringify({query, provider: document.querySelector('input[name="provider"]:checked').value, companies: companies.length ? companies : null}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data.detail || data));
+    render(query, data);
+  } catch (err) {
+    render(query, {agent_response: {execution_status: "REQUEST_ERROR", error_message: err.message, cited_data_rows: []}});
+  } finally {
+    $("go").disabled = false;
+    $("loading").classList.add("hidden");
+  }
+}
+
+// ---- Plain-language helpers ----
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WORDS = {pct: "%", geo: "", yoy: "year-on-year"};
+
+function niceName(name) {
+  const words = String(name).split("_").map(w => w in WORDS ? WORDS[w] : w).filter(Boolean);
+  const s = words.join(" ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function nicePeriod(p) {
+  p = p.trim();
+  if (p.includes("..")) { const [a, b] = p.split(".."); return `${nicePeriod(a)} to ${nicePeriod(b)}`; }
+  let m;
+  if ((m = p.match(/^(\d{4})-Q([1-4])$/))) { const q = +m[2]; return `Q${q} ${m[1]} (${MONTHS[q*3-3]}–${MONTHS[q*3-1]})`; }
+  if ((m = p.match(/^(\d{4})-H([12])$/))) return `${m[2] === "1" ? "First" : "Second"} half of ${m[1]}`;
+  if ((m = p.match(/^(\d{4})-(\d{2})$/))) return `${MONTHS[+m[2]-1]} ${m[1]}`;
+  if ((m = p.match(/^(\d{4})$/))) return `Full year ${m[1]}`;
+  return p;
+}
+
+function niceMeasure(m) {
+  m = m.trim();
+  let x;
+  const alias = m.match(/\s+AS\s+(\w+)$/i);
+  if (alias) m = m.slice(0, alias.index);
+  if ((x = m.match(/^YOY\((.+)\)$/i))) return `${niceMeasure(x[1])}, change vs the year before`;
+  if ((x = m.match(/^PRIOR\((.+),\s*(\d+)\)$/i))) return `${niceMeasure(x[1])}, ${x[2]} period(s) earlier`;
+  if ((x = m.match(/^ROLLING\((.+),\s*(\d+)\)$/i))) return `${niceMeasure(x[1])}, rolling ${x[2]} periods`;
+  return niceName(m);
+}
+
+function niceFilter(w) {
+  return w
+    .replace(/(\w+)\s+NOT IN\s*\(([^)]*)\)/gi, (_, d, v) => `${niceName(d)} is not ${v.replace(/'/g, "").split(",").map(s => s.trim()).join(", ")}`)
+    .replace(/(\w+)\s+IN\s*\(([^)]*)\)/gi, (_, d, v) => `${niceName(d)} is one of ${v.replace(/'/g, "").split(",").map(s => s.trim()).join(", ")}`)
+    .replace(/(\w+)\s*!=\s*'([^']*)'/g, (_, d, v) => `${niceName(d)} is not ${v}`)
+    .replace(/(\w+)\s*=\s*'([^']*)'/g, (_, d, v) => `${niceName(d)} is ${v}`)
+    .replace(/\bAND\b/g, "and").replace(/\bOR\b/g, "or");
+}
+
+// Split FinOpsExpr into its clauses and describe each one.
+function explainDsl(dsl) {
+  const keys = ["SELECT", "BY", "WHERE", "FOR PERIOD", "AS OF", "COMPARE PLAN", "BRIDGE", "LIMIT"];
+  const re = new RegExp(`\\b(${keys.join("|").replace(/ /g, "\\s+")})\\b`, "g");
+  const marks = [...dsl.matchAll(re)].filter(m => !(m[1] === "BY" && /\bGROUP\s+$/.test(dsl.slice(0, m.index))));
+  const parts = [];
+  marks.forEach((m, i) => {
+    const key = m[1].replace(/\s+/g, " ").toUpperCase();
+    const body = dsl.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : dsl.length).trim();
+    if (key === "SELECT") parts.push(["Figures asked for", body.split(/,(?![^(]*\))/).map(niceMeasure).join("; ")]);
+    if (key === "BY") parts.push(["Broken down by", body.split(",").map(niceName).join(", ")]);
+    if (key === "WHERE") parts.push(["Only where", niceFilter(body)]);
+    if (key === "FOR PERIOD") parts.push(["Time period", nicePeriod(body)]);
+    if (key === "AS OF") parts.push(["Books as they were on", body.replace(/'/g, "").replace("T", " at ")]);
+    if (key === "COMPARE PLAN") {
+      const pv = (body.match(/pv\s*=\s*'([^']+)'/i) || [])[1];
+      const sc = (body.match(/scenario\s*=\s*'([^']+)'/i) || [])[1];
+      parts.push(["Compared with", `Plan ${pv || ""}${sc ? ` (${sc} scenario)` : ""} against actual results`]);
+    }
+    if (key === "BRIDGE") parts.push(["Difference explained", "Split into price and volume effects"]);
+    if (key === "LIMIT") parts.push(["Rows shown", `At most ${body}`]);
+  });
+  return parts;
+}
+
+function formatValue(col, v, decimals) {
+  if (typeof v !== "number") return v ?? "";
+  if (/_pct$|pct$|utilisation|realisation/.test(col) && Math.abs(v) <= 10) return (v * 100).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1}) + "%";
+  return v.toLocaleString(undefined, {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+}
+
+const OUTCOME = {
+  SUCCESS:          {cls: "",        title: ""},
+  OUT_OF_SCOPE:     {cls: "neutral", title: "This question isn't about the finance data."},
+  REJECTED_SCOPE:   {cls: "bad",     title: "You don't have access to all the data this question needs."},
+  REFUSED:          {cls: "bad",     title: "The request was refused by a safety guardrail."},
+  VALIDATION_ERROR: {cls: "bad",     title: "The question couldn't be turned into a valid data request. Try rewording it."},
+  REQUEST_ERROR:    {cls: "bad",     title: "Something went wrong while getting the answer."},
+};
+
+function fillList(dl, pairs) {
+  dl.replaceChildren(...pairs.flatMap(([k, v]) => [el("dt", k), el("dd", v)]));
+}
+
+// ---- Rendering ----
+function render(query, d) {
+  const a = d.agent_response || {execution_status: "REQUEST_ERROR", error_message: d.error, cited_data_rows: []};
+  const rows = a.cited_data_rows || [];
+  const cols = d.columns && d.columns.length ? d.columns : (rows[0] ? Object.keys(rows[0]) : []);
+  const status = a.execution_status || "REQUEST_ERROR";
+  const failed = d.mode === "not_run" && status !== "SUCCESS";
+  // not_run: the question never reached the data (model not set up, database down).
+  const outcome = failed ? {cls: "bad", title: "The question couldn't be answered right now."} : (OUTCOME[status] || OUTCOME.REQUEST_ERROR);
+
+  // Answer
+  $("answer").className = "answer " + outcome.cls;
+  $("askedQ").textContent = `You asked: "${query}"`;
+  $("aTitle").textContent = outcome.title;
+  $("aTitle").classList.toggle("hidden", !outcome.title);
+  let text = a.narrative_explanation || "";
+  if (!text && status === "SUCCESS") text = rows.length ? "Here are the figures." : "No data matched your question.";
+  $("answerDsl").textContent = a.generated_dsl || "";
+  $("driftFlags").textContent = a.drift_flags?.length ? "Recorded vintage drift:\n" + JSON.stringify(a.drift_flags, null, 2) : "";
+  $("proposalStatus").textContent = a.proposal_id ? `Draft proposal: ${a.proposal_id}. Use the proposal review controls below.` : "";
+  $("showBridge").disabled = !/\bBRIDGE\b/i.test(a.generated_dsl || "");
+  $("aText").textContent = text;
+  $("aText").classList.toggle("hidden", !text);
+  $("aNote").textContent = status === "SUCCESS" ? "" : (a.error_message || "");
+  $("aNote").classList.toggle("hidden", !$("aNote").textContent);
+
+  const tbl = $("tbl");
+  tbl.replaceChildren();
+  $("figures").classList.toggle("hidden", !rows.length);
+  if (rows.length) {
+    const numeric = cols.map(c => rows.some(r => typeof r[c] === "number"));
+    const decimals = cols.map(c => rows.some(r => typeof r[c] === "number" && !Number.isInteger(r[c])) ? 2 : 0);
+    const head = tbl.createTHead().insertRow();
+    cols.forEach((c, i) => head.appendChild(el("th", niceName(c), numeric[i] ? "n" : "")));
+    const body = tbl.createTBody();
+    rows.forEach(r => {
+      const tr = body.insertRow();
+      cols.forEach((c, i) => { const td = tr.insertCell(); td.textContent = formatValue(c, r[c], decimals[i]); if (numeric[i]) td.className = "n"; });
+    });
+  }
+
+  // Explanation
+  $("explain").classList.add("hidden");
+  $("explainBtn").setAttribute("aria-expanded", "false");
+  $("explainBtn").textContent = "Explain this answer (debug)";
+
+  const assumptions = a.assumptions || [];
+  $("assumptions").replaceChildren(...(assumptions.length ? assumptions : ["Nothing needed to be assumed."]).map(t => el("li", t)));
+
+  const dsl = a.generated_dsl || "";
+  $("stepUnderstood").classList.toggle("hidden", !dsl);
+  $("dsl").textContent = dsl;
+  fillList($("parts"), dsl ? explainDsl(dsl) : []);
+
+  $("stepSql").classList.toggle("hidden", !d.sql);
+  $("sql").textContent = d.sql || "";
+  const params = Object.entries(d.params || {});
+  $("params").replaceChildren(...params.map(([k, v]) => {
+    const chip = el("span"); chip.append(el("b", `${k} = `), Array.isArray(v) ? v.join(", ") : String(v)); return chip;
+  }));
+  $("params").previousElementSibling.classList.toggle("hidden", !params.length);
+
+  const how = d.mode === "agno_team" ? `AI: ${PROVIDER_NAMES[d.provider] || d.provider}`
+            : d.mode === "direct_dsl" ? "Query run directly, no AI used"
+            : "Not run";
+  fillList($("details"), [
+    ["Answered by", how],
+    ["Result", status],
+    ["Rows returned", String(rows.length)],
+    ...(d.duration_ms != null ? [["Time taken", d.duration_ms < 1000 ? "Under a second" : (d.duration_ms / 1000).toFixed(1) + " seconds"]] : []),
+    ...(a.error_message ? [["Message", a.error_message]] : []),
+  ]);
+  $("raw").textContent = JSON.stringify(d, null, 2);
+
+  $("answer").classList.remove("hidden");
+  $("explainBtn").classList.toggle("hidden", failed && !dsl && !assumptions.length);
+}
+
+// Governed actions share the authenticated API; tokens stay in this page's memory.
+async function api(path, method = "GET", body) {
+  const token = $("token").value.trim();
+  if (!token) throw new Error("Enter your bearer token first.");
+  const response = await fetch(`/api/v1/${path}`, {
+    method, headers: {"Content-Type": "application/json", Authorization: `Bearer ${token}`},
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data));
+  return data;
+}
+function action(id, task, status = "actionStatus") {
+  $(id).onclick = async () => {
+    $(id).disabled = true;
+    try { await task(); }
+    catch (error) { $(status).textContent = error.message; }
+    finally { $(id).disabled = false; }
+  };
+}
+action("identify", async () => {
+  const user = await api("me");
+  $("identity").textContent = `${user.display_name} · ${user.roles.join(", ")} · ${user.companies.join(", ")}`;
+}, "identity");
+let loadedPlan = null, runCode = null, successorCode = null, watchTimer = null;
+const planCode = () => $("planCode").value.trim();
+const planPath = () => `plan-versions/${encodeURIComponent(planCode())}`;
+async function loadPlan() {
+  loadedPlan = await api(planPath());
+  $("planState").textContent = JSON.stringify(loadedPlan, null, 2);
+}
+action("loadPlan", loadPlan);
+action("createPlan", async () => {
+  await api("plan-versions", "POST", {plan_version_code: planCode()}); await loadPlan();
+});
+for (const [id, verdict] of [["passCovenant", true], ["failCovenant", false]]) {
+  action(id, async () => {
+    if (!loadedPlan || loadedPlan.plan_version_code !== planCode()) throw new Error("Load the plan before reviewing its covenant.");
+    await api(`${planPath()}/covenant`, "PUT", {covenant_ok: verdict, note: $("reviewNote").value, expected_version: loadedPlan.row_version});
+    await loadPlan();
+  });
+}
+document.querySelectorAll("[data-transition]").forEach(button => {
+  button.onclick = async () => {
+    button.disabled = true;
+    try {
+      if (!loadedPlan || loadedPlan.plan_version_code !== planCode()) throw new Error("Load this plan before changing its state.");
+      await api(`${planPath()}/transition`, "POST", {to_state: button.dataset.transition, expected_version: loadedPlan.row_version, note: $("reviewNote").value});
+      await loadPlan(); $("actionStatus").textContent = "Plan transition recorded.";
+    } catch (error) { $("actionStatus").textContent = error.message; }
+    finally { button.disabled = false; }
+  };
+});
+function stopWatching() { clearTimeout(watchTimer); watchTimer = null; }
+let watchGeneration = 0;
+async function watchProgress(generation) {
+  try {
+    const progress = await api(`reforecast/${encodeURIComponent(runCode)}/progress`);
+    if (generation !== watchGeneration) return;
+    successorCode = progress.target_version_code;
+    $("runProgress").textContent = JSON.stringify(progress, null, 2);
+    $("runMeter").max = Math.max(1, progress.dirty_rows);
+    $("runMeter").value = progress.processed_rows;
+    if (progress.phase !== "DONE") watchTimer = setTimeout(() => watchProgress(generation), 2000);
+  } catch (error) { if (generation === watchGeneration) $("runProgress").textContent = error.message; }
+}
+function startWatching(code) { stopWatching(); runCode = code; watchProgress(++watchGeneration); }
+action("watchRun", async () => startWatching(planCode()));
+action("stopWatch", async () => { ++watchGeneration; stopWatching(); });
+action("startRun", async () => {
+  const code = planCode();
+  const response = await api("reforecast", "POST", {plan_version_code: code, driver_code: $("driverCode").value.trim(), from_value: Number($("fromValue").value), to_value: Number($("toValue").value)});
+  $("actionStatus").textContent = JSON.stringify(response); startWatching(code);
+});
+action("loadSuccessor", async () => {
+  if (!successorCode) throw new Error("Watch a run until its successor is available.");
+  $("planCode").value = successorCode; await loadPlan();
+});
+for (const [id, approved] of [["approveRun", true], ["rejectRun", false]]) {
+  action(id, async () => {
+    if (!runCode) throw new Error("Watch the originating plan's run first.");
+    await api(`reforecast/${encodeURIComponent(runCode)}/decision`, "POST", {approved, comment: $("reviewNote").value});
+    $("actionStatus").textContent = "Decision sent. Progress shows whether governance accepted it.";
+  });
+}
+action("cancelRun", async () => {
+  if (!runCode) throw new Error("Watch the run first.");
+  await api(`reforecast/${encodeURIComponent(runCode)}/cancel`, "POST");
+  $("actionStatus").textContent = "Cancellation sent.";
+});
+
+function drawWaterfall(node) {
+  const legs = ["price", "volume", "mix", "fx", "rate", "efficiency"];
+  let total = Number(node.plan_amount);
+  const bars = [{label: "Plan", from: 0, to: total, value: node.plan_amount}];
+  for (const leg of legs) {
+    const next = total + Number(node[leg]);
+    bars.push({label: niceName(leg), from: total, to: next, value: node[leg]}); total = next;
+  }
+  bars.push({label: "Actual", from: 0, to: Number(node.actual_amount), value: node.actual_amount});
+  const min = Math.min(0, ...bars.flatMap(b => [b.from, b.to]));
+  const max = Math.max(0, ...bars.flatMap(b => [b.from, b.to]));
+  const y = value => 190 - (value - min) / (max - min || 1) * 145;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 800 255"); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Variance waterfall from plan to actual, in USD");
+  bars.forEach((bar, i) => {
+    const rect = document.createElementNS(ns, "rect");
+    rect.setAttribute("x", 10 + i * 99); rect.setAttribute("width", 78);
+    rect.setAttribute("y", Math.min(y(bar.from), y(bar.to)));
+    rect.setAttribute("height", Math.max(1, Math.abs(y(bar.from) - y(bar.to))));
+    rect.setAttribute("fill", i === 0 || i === 7 ? "#2B4C7E" : Number(bar.value) < 0 ? "#9A3B26" : "#2F6B4F");
+    svg.appendChild(rect);
+    [bar.label, bar.value].forEach((value, j) => {
+      const text = document.createElementNS(ns, "text"); text.textContent = value;
+      text.setAttribute("x", 10 + i * 99); text.setAttribute("y", 215 + j * 20); text.setAttribute("font-size", 11); svg.appendChild(text);
+    });
+  });
+  $("waterfall").replaceChildren(svg, el("p", `Residual: ${node.residual} USD · tolerance: ${node.tolerance} · ties: ${node.ties}`));
+}
+action("showBridge", async () => {
+  const report = await api("bridge", "POST", {dsl: $("answerDsl").textContent});
+  $("bridgeStatus").textContent = `${report.status} · vintage ${report.vintage.vintage} · ${report.vintage.closed_at} · all levels tie: ${report.ties}`;
+  drawWaterfall(report.root); $("bridgeNodes").replaceChildren(); $("citationRows").textContent = "";
+  // Expand one level at a time so thousands of signatures do not block rendering.
+  function addNode(node, parent) {
+    const details = el("details"), summary = el("summary", `${node.path.join(" / ") || "Total"} · gap ${node.gap} · residual ${node.residual}`);
+    details.appendChild(summary); parent.appendChild(details);
+    details.addEventListener("toggle", () => {
+      if (!details.open || details.dataset.loaded) return;
+      details.dataset.loaded = "true";
+      let nextOffset = 0;
+      const drill = el("button", "Show waterfall and source rows"); details.appendChild(drill);
+      drill.onclick = async () => {
+        drawWaterfall(node); drill.disabled = true;
+        try {
+          const result = await api(`variance-reports/${encodeURIComponent(report.report_id)}/citations?path=${encodeURIComponent(node.path.join("|"))}&offset=${nextOffset}&full_rows=true`);
+          $("citationRows").textContent = JSON.stringify({citations: result.rows, ledger: result.source_rows}, null, 2);
+          nextOffset = result.next_offset;
+          drill.textContent = nextOffset === null ? "All rows shown" : "Show next source rows";
+        } catch (error) { $("citationRows").textContent = error.message; }
+        finally { drill.disabled = nextOffset === null; }
+      };
+      for (const child of node.children) addNode(child, details);
+    });
+  }
+  addNode(report.root, $("bridgeNodes"));
+}, "bridgeStatus");
+
+
+action("readProposal", async () => {
+  const result = await api(`agent-proposals/${encodeURIComponent($("proposalId").value.trim())}`);
+  $("proposalDetails").textContent = JSON.stringify(result, null, 2);
+});
+for (const [id, approved] of [["approveProposal", true], ["rejectProposal", false]]) {
+  action(id, async () => {
+    const result = await api(`agent-proposals/${encodeURIComponent($("proposalId").value.trim())}/decision`, "POST", {approved});
+    $("proposalDetails").textContent = JSON.stringify(result, null, 2);
+  });
+}
+</script>
+</body>
+</html>
