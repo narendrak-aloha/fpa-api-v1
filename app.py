@@ -126,13 +126,14 @@ def scoped_tools(scope, reforecast_desk=None):
             latest = list(execute(sql, params))[0]["closed_at"].isoformat()
             cache[dsl] = reconcile(dsl, parsed.as_of, latest, SecurityContext(scope.allowed_companies, scope.max_estimated_rows), execute, scope.user_id)
         return cache[dsl]
-    return FPATools(scope, executor=execute, drift_checker=drift_check, reforecast_desk=reforecast_desk)
+    return FPATools(scope, executor=execute, drift_checker=drift_check, reforecast_desk=reforecast_desk,
+                    include_calculations=True)
 
 
 def provider_configured(provider: str) -> bool:
     if provider == "claude-code":
         return shutil.which("claude") is not None
-    return any(os.getenv(k) for k in PROVIDER_KEYS[provider])
+    return any(os.getenv(k, "").strip() for k in PROVIDER_KEYS[provider])
 
 
 def build_model(provider: str):
@@ -161,6 +162,7 @@ class QueryResponse(BaseModel):
     sql: str | None = None
     params: dict[str, Any] = Field(default_factory=dict)
     columns: list[str] = Field(default_factory=list)
+    row_calculations: list[list[dict[str, Any]]] = Field(default_factory=list)
     duration_ms: int = 0
     # This question's entry in the asker's history, when it could be kept
     ask_id: int | None = None
@@ -193,7 +195,10 @@ def query(req: QueryRequest, http_request: Request, who: Principal = Depends(cur
 def _answer(req: QueryRequest, http_request: Request, who: Principal, companies: frozenset[str]) -> QueryResponse:
     started = time.monotonic()
     log.info("query received | user=%s provider=%s companies=%s", who.user_id, req.provider, len(companies))
-    scope = UserScope(user_id=who.user_id, allowed_companies=companies, max_estimated_rows=req.max_rows)
+    # Resolved here, where the governance store is at hand, so the agent side
+    # never has to work out which countries a scope covers.
+    from fpa_project.governance import countries_of
+
     text = req.query.strip()
 
     def elapsed() -> int:
@@ -206,7 +211,14 @@ def _answer(req: QueryRequest, http_request: Request, who: Principal, companies:
             provider=req.provider, mode="not_run", duration_ms=elapsed(),
         )
 
+    if not text.upper().startswith("SELECT") and req.provider in PROVIDER_KEYS and not provider_configured(req.provider):
+        label = "Claude" if req.provider == "claude-api" else "Gemini"
+        key = PROVIDER_KEYS[req.provider][0]
+        return fail(f"API key is missing for {label}. Set {key}.")
+
     try:
+        scope = UserScope(user_id=who.user_id, allowed_companies=companies,
+                          allowed_countries=countries_of(companies), max_estimated_rows=req.max_rows)
         tools = scoped_tools(scope, _reforecast_desk(who))
     except Exception as exc:
         return fail(f"ClickHouse unavailable: {exc}")
@@ -219,7 +231,10 @@ def _answer(req: QueryRequest, http_request: Request, who: Principal, companies:
             mode = "direct_dsl"
             result = orchestrator.finalize(request, {"dsl": text}, narrative="")
         elif not provider_configured(req.provider):
-            hint = "install Claude Code and run `claude` to log in" if req.provider == "claude-code" else f"set {PROVIDER_KEYS[req.provider][0]}"
+            if req.provider == "claude-code":
+                hint = "install Claude Code and run `claude` to log in"
+            else:
+                hint = f"set {PROVIDER_KEYS[req.provider][0]}"
             return fail(f"{req.provider} is not configured: {hint}, or type FinOpsExpr starting with SELECT.")
         else:
             mode = "agno_team"
@@ -245,10 +260,22 @@ def _answer(req: QueryRequest, http_request: Request, who: Principal, companies:
         mode=mode,
         columns=list(result.cited_data_rows[0]) if result.cited_data_rows else [],
     )
-    if result.generated_dsl:
+    # Match explanations to executed, masked rows rather than relying on
+    # citation ordering or allowing the model to supply calculation inputs.
+    executed = getattr(tools, "calculation_rows", {}).get(result.generated_dsl, [])
+    response.row_calculations = [
+        next((entry["calculations"] for entry in executed
+              if {k: _jsonable(v) for k, v in entry["row"].items()} == row), [])
+        for row in result.cited_data_rows
+    ]
+    # An access-control refusal shows no SQL. Nothing was run — this block only
+    # compiles for display — but handing back the statement that would have run
+    # reads like a prepared query, which is the opposite of what was decided.
+    if result.generated_dsl and result.execution_status != "OUT_OF_SCOPE":
         try:
             compiled = compile_query(result.generated_dsl, security_context=SecurityContext(companies, req.max_rows))
             response.sql, response.params = compiled.sql, compiled.params
+            response.sql = getattr(tools, "execution_sql", {}).get(result.generated_dsl, response.sql)
         except (ParseError, DSLValidationError, ValueError):
             pass
     response.duration_ms = elapsed()

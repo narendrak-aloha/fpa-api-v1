@@ -38,8 +38,13 @@ logs/
 *.log
 *.jsonl
 
-# Per-user Claude Code settings (skills/ and .mcp.json stay committed)
-.claude/settings.local.json
+# AI assistant tooling and transcripts (kept locally, never committed)
+.claude/
+.mcp.json
+.specstory/
+.aider*
+.cursor/
+CLAUDE.local.md
 
 # Editor / OS files
 .vscode/*
@@ -50,3 +55,12 @@ logs/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Local assignment reviews and walkthroughs (retain files on disk)
+/docs/assignment_reconciled.md
+/docs/ASSIGNMENT_CHECKLIST.md
+/docs/FINAL_CHECK.md
+/docs/Done.md
+/docs/MANUAL_TEST.md
+/docs/DEMO_RUNBOOK.md
+/docs/CODE_TOUR.md
