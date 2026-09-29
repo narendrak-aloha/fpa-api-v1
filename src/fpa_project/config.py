@@ -128,6 +128,18 @@ def claude_code_model() -> str | None:
     return env_str("FPA_CLAUDE_CODE_MODEL") or None
 
 
+def llm_provider() -> str:
+    return env_str("FPA_LLM_PROVIDER", "claude-code")
+
+
+def codex_model() -> str | None:
+    return env_str("FPA_CODEX_MODEL") or None
+
+
+def codex_login_home() -> Path:
+    return Path(env_str("FPA_CODEX_HOME") or env_str("CODEX_HOME") or str(Path.home() / ".codex"))
+
+
 def gemini_model() -> str:
     return env_str("FPA_MODEL_ID", "gemini-2.5-flash")
 

@@ -138,3 +138,31 @@ Limitations: each call starts a Claude Code process (a few seconds), tool
 calling is carried through structured output rather than native tool use, the
 full transcript is resent on every call, and there is no streaming. Use
 `agno.models.anthropic.Claude` with an API key for shared deployments.
+
+## Codex subscription model (`CodexModel`)
+
+`codex_model.py` adds the official `openai-codex` Python SDK through the same
+Agno `Model` interface. It inherits only the Claude adapter's transport-independent
+message rendering, response conversion and sync/async invocation methods;
+the Claude implementation is unchanged. Every turn uses a fresh ephemeral
+Codex thread and an isolated home containing only the file-backed ChatGPT login.
+The SDK's matching CLI runtime is installed by the locked Python dependency.
+
+Agno keeps the existing prompts, delegation, governed tool execution, guardrails,
+disclosure logging and `AgentPlan` parsing. Codex receives the same transcript
+and tool catalog, plus a transport instruction to encode tool arguments as JSON
+strings for its strict output schema; the adapter decodes these into ordinary
+Agno tool calls. Native shell, web, apps, plugins and other capabilities are
+disabled; a deny-all `PreToolUse` hook blocks remaining local tools, including
+`apply_patch`, with read-only sandboxing and denied escalation as a second boundary.
+Host settings, skills and project instructions are not loaded. SDK failures,
+invalid output and timeouts use Agno's existing `ModelProviderError` path.
+
+`FPA_CODEX_MODEL` optionally chooses the model. `FPA_CODEX_HOME` selects the
+login directory; otherwise `CODEX_HOME` or `~/.codex` is used. Run
+`codex -c 'cli_auth_credentials_store="file"' login` with ChatGPT. API keys
+are cleared from the SDK environment and API-key-only accounts are rejected.
+SDK token refreshes are copied back atomically without copying settings or
+history, so the login directory must be writable. Calls have a 120-second
+transport timeout. As with Claude, the full transcript is resent per call
+and the streaming methods yield one completed model response.

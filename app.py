@@ -3,6 +3,7 @@
 Run:  uvicorn app:app --reload --port 8000   then open http://localhost:8000
 LLM behind the Agno team (chosen per request):
       claude-code -> Claude Agent SDK using the local `claude` login (subscription, optional FPA_CLAUDE_CODE_MODEL)
+      codex      -> Codex SDK using the local ChatGPT login (subscription, optional FPA_CODEX_MODEL)
       claude-api  -> ANTHROPIC_API_KEY (+ FPA_CLAUDE_MODEL);  gemini -> GOOGLE_API_KEY (+ FPA_MODEL_ID)
 Env:  CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USER, CLICKHOUSE_PASSWORD
 """
@@ -32,7 +33,7 @@ from fpa_project.agent_team import (  # noqa: E402
 )
 from fpa_project.dsl import DSLValidationError, ParseError, SecurityContext, compile_query  # noqa: E402
 from fpa_project.config import (  # noqa: E402
-    claude_api_model, clickhouse as clickhouse_settings, gemini_model,
+    claude_api_model, clickhouse as clickhouse_settings, gemini_model, llm_provider,
 )
 from fpa_project.log_config import configure as configure_logging  # noqa: E402
 from fpa_project.governance import Principal, Refused, authenticate  # noqa: E402
@@ -133,6 +134,9 @@ def scoped_tools(scope, reforecast_desk=None):
 def provider_configured(provider: str) -> bool:
     if provider == "claude-code":
         return shutil.which("claude") is not None
+    if provider == "codex":
+        from fpa_project.agent_team.codex_model import codex_configured
+        return codex_configured()
     return any(os.getenv(k, "").strip() for k in PROVIDER_KEYS[provider])
 
 
@@ -140,6 +144,9 @@ def build_model(provider: str):
     if provider == "claude-code":
         from fpa_project.agent_team.claude_code_model import ClaudeCodeModel
         return ClaudeCodeModel()
+    if provider == "codex":
+        from fpa_project.agent_team.codex_model import CodexModel
+        return CodexModel()
     if provider == "claude-api":
         from agno.models.anthropic import Claude
         return Claude(id=claude_api_model())
@@ -152,7 +159,7 @@ class QueryRequest(BaseModel):
     # Optional narrowing. It can only shrink the caller's scope, never widen it.
     companies: list[str] | None = None
     max_rows: int = Field(default=1_000_000, ge=1)
-    provider: Literal["claude-code", "claude-api", "gemini"] = "claude-code"
+    provider: Literal["claude-code", "codex", "claude-api", "gemini"] = Field(default_factory=llm_provider, validate_default=True)
 
 
 class QueryResponse(BaseModel):
@@ -233,6 +240,8 @@ def _answer(req: QueryRequest, http_request: Request, who: Principal, companies:
         elif not provider_configured(req.provider):
             if req.provider == "claude-code":
                 hint = "install Claude Code and run `claude` to log in"
+            elif req.provider == "codex":
+                hint = "install the project dependencies and run `codex -c cli_auth_credentials_store=\"file\" login` with ChatGPT"
             else:
                 hint = f"set {PROVIDER_KEYS[req.provider][0]}"
             return fail(f"{req.provider} is not configured: {hint}, or type FinOpsExpr starting with SELECT.")
@@ -356,7 +365,7 @@ def ask_history_item(ask_id: int, who: Principal = Depends(current_user)) -> dic
 
 @app.get("/api/v1/providers")
 def providers() -> list[dict[str, Any]]:
-    return [{"id": p, "configured": provider_configured(p)} for p in ("claude-code", "claude-api", "gemini")]
+    return [{"id": p, "configured": provider_configured(p)} for p in ("claude-code", "codex", "claude-api", "gemini")]
 
 
 # --------------------------------------------------------------------------

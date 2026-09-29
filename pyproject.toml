@@ -28,6 +28,7 @@ dependencies = [
     "google-genai>=2.0",      # provider: gemini
     "anthropic>=1.0",         # provider: claude-api
     "claude-agent-sdk>=0.2",  # provider: claude-code (also needs the local `claude` CLI)
+    "openai-codex==0.160.0",  # provider: codex (bundles its compatible CLI runtime)
     "packaging>=23.0",
     "python-json-logger>=4.2.0",
     "python-dotenv>=1.2.3",

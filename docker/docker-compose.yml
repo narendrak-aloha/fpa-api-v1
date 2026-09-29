@@ -29,6 +29,9 @@ services:
       # claude-code needs neither; it uses the login mounted below.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      FPA_LLM_PROVIDER: ${FPA_LLM_PROVIDER:-claude-code}
+      FPA_CODEX_MODEL: ${FPA_CODEX_MODEL:-}
+      FPA_CODEX_HOME: /opt/codex-login
       # Where the API finds the workflow client and the commitment ledger.
       TEMPORAL_HOST: temporal:7233
       FPA_COMMITMENT_URL: http://commitment:8100
@@ -49,6 +52,8 @@ services:
       # Host claude CLI and login, for the claude-code provider.
       - ${HOME}/.local/share/claude:/opt/claude:ro
       - ${HOME}/.claude:/root/.claude
+      # Only auth.json is copied into a private, temporary SDK home per turn.
+      - ${FPA_CODEX_HOME:-${HOME}/.codex}:/opt/codex-login
     depends_on:
       postgres:
         condition: service_healthy
