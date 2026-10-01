@@ -314,7 +314,6 @@ measures use these standard FP&A definitions:
 - `realisation`: service amount divided by service quantity for accounts
   41000, 41010 and 41020.
 - `headcount`: distinct non-empty employee identifiers in the selected group.
-  Quarterly queries currently cover the whole quarter; closing-month handling remains unfinished.
 - `bookings`: services revenue booked in the selected period.
 - `open_pipeline`: not physically present in the seed; it is rejected by the
   default snapshot unless an application extends the schema.

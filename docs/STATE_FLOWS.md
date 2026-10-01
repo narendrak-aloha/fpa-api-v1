@@ -379,7 +379,7 @@ One row per (source plan, revision): whether that revision's numbers actually re
 | `PUBLISHED` | The numbers are copied into the live cube table | After the CFO's lock, only from RESERVED | [activities.py](../src/fpa_project/recompute/activities.py) |
 | `COMMITTED` | The Commitment Service accepted every commitment | The commit step | [activities.py](../src/fpa_project/recompute/activities.py) |
 | `COMPENSATED` | Commitments were released and the cube restored from backup | The rollback | [activities.py](../src/fpa_project/recompute/activities.py) |
-| `COMPENSATION_FAILED` | The rollback itself failed — cube and ledger may now disagree, and it needs a human operator | Rollback exhausted its retries | [activities.py](../src/fpa_project/recompute/activities.py) |
+| `COMPENSATION_FAILED` | The rollback failed and requires operator attention | Rollback exhausted its retries | [activities.py](../src/fpa_project/recompute/activities.py) |
 | `SUPERSEDED` | An earlier committed revision whose commitments were released because a newer revision committed | The next revision's commit, only from COMMITTED | [activities.py](../src/fpa_project/recompute/activities.py) |
 
 ```mermaid

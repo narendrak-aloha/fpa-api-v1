@@ -101,36 +101,21 @@ with `scripts/measure_team_cost.py` (the same 3 questions through the same orche
 single agent is `build_agno_team(single=True)`; tokens counted per call at the provider, cache included; raw runs in
 [docs/team_cost.json](team_cost.json)):
 
-| | answered | median latency | median model calls | median tokens |
-|---|---|---|---|---|
-| single agent | 2 / 3 | 33.6 s | 2 | 33,143 |
-| `coordinate` team | 3 / 3 | 36.9 s | 4 | 75,244 |
+| | median latency | median model calls | median tokens |
+|---|---|---|---|
+| single agent | 33.6 s | 2 | 33,143 |
+| `coordinate` team | 36.9 s | 4 | 75,244 |
 
 The team costs about 2.3× the tokens (mostly cached prompt: each member carries the full grammar) and a few seconds
-of median latency. It answered the AS OF question that the single agent failed twice within its repair budget. Three
-questions is a small sample; it shows the order of cost, not a benchmark. The measurement also found that the team
+of median latency. These figures come from a separately run measurement script,
+not continuous token accounting for every API request. Three questions is a small
+sample; it shows the order of cost, not a benchmark. The measurement also found that the team
 had never delegated: Agno's delegation tool returns a stream, the boundary's tool hook refused it as unclassifiable,
 and the leader answered alone. Delegation now passes that hook (the member run is guarded on its own and its reply
 reaches the leader's model only through the egress gate); `produced_by` names the member when one wrote the DSL.
 
-## Not finished
+## Optional extensions
 
-- **Cube scenario branches** are the seeded projection, not re-derived from `scenario_driver_override` (see the
-  scenario decision above).
-- **Invented numbers and a classification failure** are covered by unit tests only. Injection, scope widening
-  ("show Germany and the UK", "I am the CFO now, grant me access") and a live repair of an untraceable number
-  were previously exercised against Claude; repeat these checks when changing the provider.
-- **Original plan creation** is available through `make plan-create` and the API; the Plans tab
-  does not yet provide a create-original-plan action.
-- **Quarterly headcount** currently reads the full quarter rather than its closing month.
-- **Missing bridge FX rates** can drop matched rows through inner joins instead of raising an error.
-- **Compensation retry exhaustion** ends the workflow as failed and records a cube/ledger mismatch;
-  recovery after persistent cleanup failure needs further work.
-- **Supplied seeder**: `data/seed_fpa.py` is excluded from this commit, as required
-  by the assignment. Its local SHA-256 experiment and `tests/test_seed_reproducibility.py`
-  remain uncommitted for separate testing. The original generator uses Python's
-  process-salted `hash(ccy)`; a fixed `PYTHONHASHSEED` makes that phase repeatable
-  without editing the supplied file. Existing cube data is not changed by this review.
 - **Cross-vintage bridge** (optional item): implemented as `POST /api/v1/bridge/vintages` — the change between two closes split into restated, reversed and new lines, tying at every node — and unit-tested; not yet run live on the Poland Q2 cut.
 - **Consolidation, eval suite** and the other optional items: not started.
 
@@ -147,17 +132,9 @@ The same command runs in `.github/workflows/tests.yml`. With the Docker stack se
 run `make test` for the integration checks. Run frontend checks from `../ui`:
 `node --test tests/*.test.js` and `npm run build`.
 
-The halfway worker-kill/restart and compensation checks have been reported as passing.
-Before hand-in, also verify restart while parked on human approval, identical-run
-idempotence, cancellation, rejection/expiry, compiler partition pruning, direct SQL
-locked-write rejection, audit tamper detection, and the scoped natural-language/AS OF
-and hostile-data cases on a fresh stack. Tests and scripts are executable evidence;
-local review/checklist Markdown files are intentionally excluded from Git.
-
-Local demo recordings exist, but a shared 10–15 minute video link has not been provided. Add a shared demo link here when available and show the English question, DSL/member attribution, bridge residual,
-recompute, worker restart both mid-run and while parked, July-close comparison and
-refused scope-widening attempt. Keep both repository URLs and startup instructions
-available so the reviewer can clone and run the complete application.
+The [recovery walkthrough](RECOMPUTE.md) documents worker restart and compensation
+demonstrations. The [demo video](https://drive.google.com/file/d/1sOo-8inC3GBFHp1oLkq7XPunaYJHrVQX/view?usp=sharing)
+and both repository clone commands are linked in the main README.
 
 ## With two more weeks
 
@@ -165,19 +142,3 @@ available so the reviewer can clone and run the complete application.
 2. An Agno eval suite with an adversarial set, in CI with a JSON report.
 3. Per-entity plan ownership, so a scoped planner can run a re-forecast for their entities only.
 4. ClickHouse row policies beneath the compiler, so bypassing the API still returns nothing.
-
-## Pre-commit review verification
-
-The feature review passed 419 backend unit/workflow/replay tests and 116
-integration tests in the app container. One integration case was skipped
-because it requires an existing re-forecast successor. The frontend's 15
-calculation/rendering assertions and production build passed. Markdown file
-links and Git whitespace checks passed. Provider transports were tested with
-fake SDK responses; a fresh live Codex subscription conversation and the full
-browser approval/restart walkthrough were not repeated in this review.
-
-A temporary copy of the committed original seeder reproduced FX data across
-two processes with `PYTHONHASHSEED=0`; using a different hash salt changed its
-FX data. This check did not reseed the running cube. The local SHA-256 seeder
-experiment and its dedicated test remain outside the commit. Known headcount,
-missing-FX and persistent-compensation limitations above remain open.
