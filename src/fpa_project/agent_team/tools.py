@@ -58,6 +58,8 @@ class FPATools:
         self.include_calculations = include_calculations
         self.calculation_rows = {}
         self.execution_sql = {}
+        # Set from the original request by the orchestrator, never by a model.
+        self.historical_constraint = None
         # Present only for a human planner: what propose_reforecast resolves
         # words against (fpa_project.reforecast_requests.ReforecastDesk).
         self.reforecast_desk = reforecast_desk

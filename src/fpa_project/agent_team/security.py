@@ -78,12 +78,38 @@ def persist_disclosure(event):
 DELEGATION_TOOLS = frozenset({"delegate_task_to_member", "delegate_task_to_members"})
 
 
+class HistoricalQueryGuardrail(BaseGuardrail):
+    """Enforce the trusted request constraint on member calls and final plans."""
+
+    def __init__(self, tools):
+        self.tools = tools
+
+    def validate(self, dsl):
+        constraint = self.tools.historical_constraint
+        if constraint is not None:
+            try:
+                constraint.validate(dsl)
+            except Exception as exc:
+                raise OutputCheckError(str(exc)) from exc
+
+    def check(self, run_output):
+        content = run_output.content
+        if hasattr(content, 'model_dump'):
+            content = content.model_dump()
+        if isinstance(content, dict) and not content.get('out_of_scope'):
+            self.validate(content.get('dsl', ''))
+
+    async def async_check(self, run_output):
+        self.check(run_output)
+
+
 class AgentBoundary:
     def __init__(self, tools, writer=persist_disclosure):
         self.tools = tools
         self.writer = writer
         self.pii = PIIDetectionGuardrail(mask_pii=True)
         self.injection = InjectionGuardrail()
+        self.historical = HistoricalQueryGuardrail(tools)
         self.evidence = []
         self.executed_dsl = []
         self.classes = set()
@@ -93,6 +119,11 @@ class AgentBoundary:
         try:
             run_input.input_content = self.sanitize(run_input.input_content)
             self.injection.check(run_input)
+            # A leader may omit context when delegating. Every member still
+            # receives the same verified constraint from the backend toolset.
+            constraint = self.tools.historical_constraint
+            if constraint and isinstance(run_input.input_content, str):
+                run_input.input_content += '\n\n' + constraint.instruction
         except InputCheckError:
             raise
         except Exception as exc:
@@ -130,6 +161,10 @@ class AgentBoundary:
             raise InputCheckError("build a new toolset for a narrowed dependency scope")
         if function_name in DELEGATION_TOOLS:
             return function_call(**arguments)
+        if function_name == "run_finops_query":
+            self.historical.validate(arguments.get('dsl', ''))
+        if function_name in {'propose_driver', 'propose_reforecast'} and self.tools.historical_constraint:
+            raise OutputCheckError('A historical evidence request cannot change a driver or draft a re-forecast')
         try:
             result = function_call(**arguments)
             safe = self.sanitize(result)
@@ -149,6 +184,7 @@ class AgentBoundary:
             raise InputCheckError("tool classification or disclosure failed; output blocked") from exc
 
     def post(self, run_output):
+        self.historical.check(run_output)
         content = run_output.content
         if hasattr(content, "model_dump"):
             content = content.model_dump()

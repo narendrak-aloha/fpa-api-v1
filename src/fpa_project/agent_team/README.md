@@ -1,9 +1,9 @@
 # FinOpsExpr Agent Team
 
 `fpa_project.agent_team` translates natural-language planning requests into a
-validated `AgentPlan` containing FinOpsExpr DSL. It is an agent boundary, not a
-query executor: it never creates SQL, opens ClickHouse connections, executes
-code, or commits model changes.
+validated `AgentPlan` containing FinOpsExpr DSL. The model proposes DSL; compiler-backed tools validate and execute it through
+an injected database adapter. The model receives no arbitrary SQL, filesystem
+or code execution tool. Model changes require governed human approval.
 
 ## Safety contract
 
@@ -20,13 +20,22 @@ code, or commits model changes.
   `OUT_OF_SCOPE` and are never compiled or executed; a refusal that contains a
   number is replaced with a fixed message.
 - The plan's `assumptions` are carried into `AgentFPAResponse.assumptions`.
+- Historical questions retain an independently resolved constraint. Explicit
+  `AS OF` timestamps and named month closes (with an explicit or unambiguous
+  question year) resolve through compiler-owned, parameterised vintage lookups.
+  Missing or ambiguous closes require clarification before a model is called.
+  Verified timestamps reach both the leader and delegated members. An Agno
+  guardrail checks each evidence tool call and final plan, and the orchestrator
+  checks again before execution: missing or changed `AS OF` cannot fall back to
+  current data. The existing initial attempt plus one repair limit applies;
+  no new agent tool or DSL syntax is added.
 - `ArithmeticVerificationPostHook` rejects any number in the narrative that is
   not present in the returned rows, and the orchestrator retries the team at
   most twice (the initial attempt and one repair).
-- The Agno adapter is optional and exposes no database, filesystem, SQL, or code
-  execution tools. Human approval is required outside this module for any
-  future model change; `ModelChangeProposal` is always `DRAFT` and the module
-  itself has no apply or write path.
+- The Agno adapter exposes compiler-backed query tools and draft proposal tools.
+  `propose_driver` uses durable human confirmation through `proposals.py`;
+  human planners receive `propose_reforecast` for a draft request. Agents cannot
+  approve or apply their own proposals.
 - Terminal logging is enabled for major lifecycle events. Logs contain only
   run IDs, statuses, counts, validation codes, and exception types; raw requests,
   DSL, SQL, parameters, and sensitive row values are not logged.
@@ -81,8 +90,8 @@ The flow is NL/request boundary → masked context → DSL parse and registry
 validation → scoped parameterized SQL compilation → ClickHouse execution →
 masked result rows. The module does not create the ClickHouse connection. A
 real database test requires reachable ClickHouse credentials
-(`clickhouse-connect` is installed with the project); the repository tests use
-an injected fake executor.
+(`clickhouse-connect` is installed with the project). Unit tests use fake
+executors; marked integration tests query the Docker stack.
 
 ## Natural-language execution with the team
 
@@ -109,7 +118,8 @@ out-of-scope rule. Build the team per request when scope differs between
 callers, because the toolset holds the `UserScope`.
 
 `AgentFPAResponse.execution_status` is one of `SUCCESS`, `VALIDATION_ERROR`,
-`REJECTED_SCOPE` or `OUT_OF_SCOPE`.
+`REJECTED_SCOPE`, `OUT_OF_SCOPE`, `AWAITING_APPROVAL`, `DRAFT`, `REFUSED`
+or `REFORECAST_PROPOSED`.
 
 ## Claude subscription model (`ClaudeCodeModel`)
 
@@ -166,3 +176,12 @@ SDK token refreshes are copied back atomically without copying settings or
 history, so the login directory must be writable. Calls have a 120-second
 transport timeout. As with Claude, the full transcript is resent per call
 and the streaming methods yield one completed model response.
+
+## Calculation evidence
+
+With `FPATools(include_calculations=True)`, supported plain ratio queries project
+their numerator and denominator from the same scoped SQL query. Helper columns
+are stripped from rows and recorded separately for the API's `row_calculations`.
+Window queries and unsupported formulas keep their original SQL. Bridge citation
+calculations use returned quantities, prices and FX rates; missing values are
+disclosed instead of inferred. See [usage](../../../docs/USAGE.md).

@@ -97,6 +97,8 @@ def build_agno_team(model=None, toolset=None, *, disclosure_writer=None, single=
         "If the question cannot be answered from the FP&A cube (for example sports, weather, news, general knowledge, or a metric that does not exist), "
         "set out_of_scope=true, leave dsl empty, do not call run_finops_query, and briefly say what you can answer instead. "
         "Never invent a placeholder query. "
+        "Preserve every requested historical close using AS OF and the verified historical requirement supplied with the request. "
+        "Never return an executable draft missing that constraint; if the close cannot be resolved, request clarification. "
         "Always write and run the dsl for what was asked, even if it names companies or countries the caller may not see: "
         "the compiler limits every result to the caller's entity scope and you cannot change it. "
         "Do not say in explanation which entities, countries or scope the figures cover, and do not mention the "

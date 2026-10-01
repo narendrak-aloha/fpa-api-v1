@@ -1,7 +1,7 @@
 # FPA project: architecture and developer reference
 
-This project contains a small, dependency-free Python implementation of a
-schema-aware FinOpsExpr parser and ClickHouse SQL compiler. It accepts the
+This project is a FastAPI planning service with a FinOpsExpr parser and
+ClickHouse SQL compiler, an Agno agent team, Postgres governance and Temporal recompute. It accepts the
 assignment's query DSL, produces a typed AST, validates names against a
 static schema snapshot derived from `seed_fpa.py`, and emits parameterised SQL.
 
@@ -25,7 +25,7 @@ fpa-project/
   data/out/cube_manifest.json  Seed manifest; app.py reads the company list from it
   src/fpa_project/dsl/         Lexer, AST, parser, schema and compiler
   src/fpa_project/agent_team/  Safe NL-to-FinOpsExpr Agno boundary (team, tools, orchestrator,
-                               ClaudeCodeModel for the Claude subscription)
+                               ClaudeCodeModel and CodexModel for subscription transports)
   src/fpa_project/recompute/   Durable re-forecast: workflow, activities, engine, worker
                                (docs/RECOMPUTE.md)
   src/fpa_project/commitment/  The downstream Commitment Service, as its own process
@@ -36,7 +36,7 @@ fpa-project/
 
 ## Architecture and data flow
 
-The project is a dependency-light library with a strict boundary between
+The query path has a strict boundary between
 planning, compilation, and execution:
 
 ```text
@@ -46,7 +46,7 @@ Browser page -> POST /api/v1/query (app.py)
 PlanningRequest + UserScope
           |
           v
-agent_team.masking -> Agno team (Claude subscription / Claude API / Gemini) -> AgentPlan
+agent_team.masking -> Agno team (Claude subscription / Codex subscription / Claude API / Gemini) -> AgentPlan
                                       |
                                       v
                          parser -> typed AST
@@ -64,8 +64,8 @@ agent_team.masking -> Agno team (Claude subscription / Claude API / Gemini) -> A
 
 `dsl` owns language semantics. `lexer.py` recognizes tokens, `parser.py`
 builds immutable AST dataclasses, `schema.py` loads the checked-in contract,
-and `compiler.py` emits parameterized ClickHouse SQL. Actual reads use
-`FINAL`; `AS OF` resolves a ledger vintage; ratio measures are recomputed from
+and `compiler.py` emits parameterized ClickHouse SQL. Actual reads filter the chosen vintage and deduplicate postings before aggregation;
+`AS OF` resolves a ledger vintage; ratio measures are recomputed from
 their numerator/denominator; and `BRIDGE` joins actuals to plan on
 `company`, `period_month`, `account`, and `dim_signature_hash` before
 calculating variance foundations. `bridge.py` contains the deterministic
@@ -80,8 +80,8 @@ orchestrator: it validates candidates, applies scope through the tools, checks
 numeric narrative claims, and caps model retries. `logging_utils.py` and the
 hooks provide allow-listed operational logs and redacted external audit data.
 
-No module in this package creates a ClickHouse connection, executes writes, or
-mutates the schema. Applications own authentication, connection lifecycle,
+The DSL compiler does not create a database connection or execute writes.
+Workflow activities and governance services own the write path. Applications own authentication, connection lifecycle,
 and any human approval workflow for draft model changes. In this repository
 that application is `app.py`: it creates the `clickhouse-connect` client and
 the caller's `UserScope`, and hands both to the package.
@@ -90,15 +90,16 @@ the caller's `UserScope`, and hands both to the package.
 
 `seed_fpa.py` defines the fixture's physical tables and business story;
 `data/schema_snapshot.json` is the compiler's checked-in semantic contract.
-When a metric, dimension, scenario, or table grain changes, update the seed,
-snapshot, and tests together. The compiler should not infer schema changes from
+The assignment requires the supplied seeder to stay unchanged. Extend application
+contracts and tests explicitly when supporting new metrics or dimensions; do not
+modify the supplied fixture as part of an application change. The compiler should not infer schema changes from
 live database metadata because that would make query behavior change silently.
 
 The DSL compiler uses only the Python standard library. Install everything, including
 the test dependency, with `uv sync --frozen --extra dev`; run tests with
 `python -m pytest`. The web service and model providers need the full set.
-The compiler does not open a database connection. `clickhouse-connect` can be
-added by an application that wants to execute the returned SQL and parameters.
+The compiler does not open a database connection. `clickhouse-connect` is included in the locked application dependencies
+and executes compiled SQL through an injected adapter.
 
 The package therefore supports two deployment modes: an offline validation
 worker that uses the parser/registry/compiler without ClickHouse, and a
@@ -115,9 +116,9 @@ model context is prepared. The team cannot generate SQL or execute writes. See
 
 The team's instructions include a FinOpsExpr grammar guide with examples, so
 members write FinOpsExpr rather than SQL-like forms such as
-`SELECT SUM(services_revenue)`. Members get the four tools `list_metrics`,
-`list_dimensions`, `run_finops_query` and `propose_driver`; there is no SQL
-tool. The team returns an `AgentPlan` with `dsl`, `explanation` and
+`SELECT SUM(services_revenue)`. Members get `list_metrics`, `list_dimensions`, `run_finops_query` and
+`propose_driver`; human planners also receive `propose_reforecast`. Driver
+proposals use governed human confirmation. There is no arbitrary SQL tool. The team returns an `AgentPlan` with `dsl`, `explanation` and
 `assumptions`. When a question cannot be answered from the cube (for example a
 cricket score), the plan sets `out_of_scope=true` with an empty `dsl`, and the
 orchestrator returns `OUT_OF_SCOPE` without compiling or querying ClickHouse.
@@ -140,10 +141,11 @@ variables apply only when running on the host.
 `app.py` exposes the full flow over HTTP. It serves no pages: the front end is the Vue app in
 `fpa-assignment/ui`, which proxies `/api` to this service.
 
-Everything in Docker. The stack is four containers: `fpa_clickhouse-1` (ClickHouse),
-`fpa_postgres-1` (Postgres), `fpa_temporal-1` and `fpa_app-1` (this service). On every start
+The Docker stack has six containers: ClickHouse, Postgres, Temporal, the API,
+the recompute worker and the Commitment Service. On every start
 `fpa_app-1` waits for Postgres, runs `alembic upgrade head`, seeds both stores (a no-op
-once they hold data; `FPA_SKIP_SEED=1` skips it) and then serves the API:
+once they hold data; `FPA_SKIP_SEED=1` skips it), imports governed plan lines,
+settles the seeded plan through its approval gates, and then serves the API:
 
 ```bash
 make docker-local-run      # build, start, migrate, seed, follow the log (Ctrl+C stops the stack)
@@ -186,11 +188,11 @@ on a Linux host where Claude Code is installed and logged in. Elsewhere use
 Endpoints:
 
 - `POST /api/v1/query` with `{"query", "provider", "companies", "max_rows"}`.
-  `provider` is `claude-code` (default), `claude-api` or `gemini`;
-  `companies` is a list of company codes and defaults to every company in
-  `data/out/cube_manifest.json`.
-- `GET /api/v1/providers` reports which providers are configured; the page
-  greys out the others.
+  `provider` is `claude-code` (default), `codex`, `claude-api` or `gemini`;
+  `companies` can narrow the authenticated caller's allowed companies. Omitting it
+  uses the caller's scope; it never grants access to every company in the cube.
+- `GET /api/v1/providers` reports provider configuration; the UI keeps all providers
+  visible and explains missing setup before submitting a model request.
 
 Every request is logged by `fpa_app-1`, so `make docker-local-run` and
 `make docker-local-logs` show which API was hit and what it returned:
@@ -231,19 +233,20 @@ The response wraps the orchestrator's `AgentFPAResponse` unchanged:
 `OUT_OF_SCOPE`. `mode` is `agno_team` for natural-language questions,
 `direct_dsl` when the question already starts with `SELECT` (the model is
 skipped but validation, scope, compilation and execution are unchanged), and
-`not_run` for configuration or connection errors. `sql` and `params` are
-recompiled from the generated DSL for display; the executed query is the one
-recorded in `logs/fpa_external_audit.jsonl`.
+`not_run` for configuration or connection errors. `sql` and `params` describe the executed query when available, including ratio
+operand projections used for `row_calculations`. Fallback display compilation
+is used only when the toolset has no recorded execution.
 
 The team is built per request with `build_agno_team(model=..., toolset=FPATools(scope, ...))`,
-so every member's tools carry the caller's scope. Scope comes from the request,
-never from model output or DSL text.
+so every member's tools carry the caller's scope. Scope comes from the authenticated bearer token and may be narrowed by the request,
+never widened by model output or DSL text.
 
 ### Model providers and authentication
 
 | Provider | Agno model | Authentication | Optional model setting |
 |---|---|---|---|
 | `claude-code` | `ClaudeCodeModel` (Claude Agent SDK) | Local Claude Code login (`claude`, Pro/Max subscription) | `FPA_CLAUDE_CODE_MODEL` |
+| `codex` | `CodexModel` (OpenAI Codex Python SDK) | File-backed ChatGPT login | `FPA_CODEX_MODEL` |
 | `claude-api` | `agno.models.anthropic.Claude` | `ANTHROPIC_API_KEY` | `FPA_CLAUDE_MODEL` |
 | `gemini` | `agno.models.google.Gemini` | `GOOGLE_API_KEY` | `FPA_MODEL_ID` |
 
@@ -257,7 +260,7 @@ should use `claude-api`. ClickHouse connection settings come from
 
 ## Configuration
 
-`.env` holds API keys only. `make env` copies `.env.example` to `.env`; both keys
+`.env` holds API keys and optional provider/runtime settings. `make env` copies `.env.example` to `.env`; both keys
 are optional, since the `claude-code` provider uses the host's `claude` login.
 Everything else about the stack — ports, container names, hostnames, passwords — is
 written in `docker/docker-compose.yml`, so there is one place to read how it is wired.
@@ -274,8 +277,7 @@ LOG_LEVEL=DEBUG make docker-local-run     # also LOG_LEVEL_UVICORN, LOG_HANDLER,
 
 A natural-language question typically takes 30-60 seconds with `claude-code`:
 the leader and each member step start a separate Claude Code process, and a
-failed validation or arithmetic check triggers another team attempt (at most
-five).
+failed validation or arithmetic check triggers another team attempt (initial attempt plus one repair).
 
 ## Schema source
 
@@ -283,7 +285,8 @@ five).
 scenarios and measures used by the compiler. The table and dimension metadata
 comes from `seed_fpa.py`:
 
-- `fact_gl_actual` is the actuals fact table and is read with `FINAL`.
+- `fact_gl_actual` is the actuals fact table; compiled reads filter by vintage
+  and keep the newest version per posting before aggregation.
 - `fact_plan_line` is the plan fact table keyed by plan version and scenario.
 - The 19 planning dimensions are the canonical `DIM_COLUMNS` tuple.
 - `company`, `account`, and `period_month` remain separate fact axes.
@@ -308,10 +311,10 @@ measures use these standard FP&A definitions:
   the compiler represents the denominator as `sum(quantity)` for delivery
   payroll/service rows because the seed does not contain a separate capacity
   column.
-- `realisation`: realised revenue per delivery quantity, represented as
-  `services_revenue / delivery quantity`.
-- `headcount`: closing-period row count proxy over employee-bearing rows;
-  it is semi-additive over time.
+- `realisation`: service amount divided by service quantity for accounts
+  41000, 41010 and 41020.
+- `headcount`: distinct non-empty employee identifiers in the selected group.
+  Quarterly queries currently cover the whole quarter; closing-month handling remains unfinished.
 - `bookings`: services revenue booked in the selected period.
 - `open_pipeline`: not physically present in the seed; it is rejected by the
   default snapshot unless an application extends the schema.
@@ -345,6 +348,20 @@ arity checks, so malformed expressions cannot pass authoring validation.
 `PlanningRegistry.validate_driver()` and `validate_model()` are the authoring
 boundary for Postgres-backed persistence: call them before inserting a driver
 or planning model. They return structured `RegistryIssue` values, validate
-references and function semantics, and reject dependency cycles. The current
-repository does not include a Postgres adapter, so persistence integration is
-intentionally left to the application layer.
+references and function semantics, and reject dependency cycles. Governed driver persistence and human approval are implemented in
+`agent_team/proposals.py` and the application endpoints.
+
+## Historical questions and calculation explanations
+
+`agent_team/historical.py` resolves an explicit AS OF timestamp or one named
+month close before the model is called. Missing years, multiple closes and
+unverified metadata require clarification. The verified timestamp is carried
+to delegated members and checked before evidence tools and final execution.
+Historical evidence requests cannot draft driver or re-forecast changes.
+
+`query_calculations.py` projects ratio operands into the same scoped aggregate
+query and removes helper columns from the result table. Calculations are returned
+alongside each row. Bridge citations include their contribution formula and
+operands; the UI displays missing-input explanations when operands are unavailable.
+See [usage](USAGE.md), [agent details](../src/fpa_project/agent_team/README.md)
+and [delivery notes](DELIVERY.md).

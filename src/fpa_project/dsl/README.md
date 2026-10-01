@@ -48,7 +48,9 @@ indicates a well-formed query that violates the schema or semantic contract.
 - `SecurityContext` fails closed for invalid budgets or malformed company
   scopes. It is constructed by the authenticated application, never by the
   DSL or model output.
-- Actual reads use ClickHouse `FINAL`; `AS OF` resolves the ledger vintage.
+- Actual reads filter by the selected ledger vintage and retain the newest
+  version per posting before aggregation; deletion markers hide removed rows.
+  The seed wrapper preserves historical versions by disabling destructive merges.
 - `AS OF` on a plan query, reverse period ranges, and invalid measure aliases
   are rejected before SQL generation.
 - Formula validation enforces function arity and rejects unknown references,
@@ -65,3 +67,8 @@ indicates a well-formed query that violates the schema or semantic contract.
 The compiler is intentionally a SQL generator, not a database client. An
 application may execute its result with `clickhouse-connect` or another
 ClickHouse driver after applying its own authorization and row-scope context.
+
+`close_month_lookup(year, month)` emits a parameterised metadata lookup for a
+named historical close. The agent boundary requires exactly one matching close;
+`vintage_lookup(as_of)` resolves an explicit timestamp to the latest sealed close
+on or before it. These helpers return SQL and parameters without opening a connection.

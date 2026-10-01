@@ -18,7 +18,7 @@ is started with.
 
 ```mermaid
 flowchart TB
-    UI["Browser<br/><i>fpa-ui-v2</i>"]
+    UI["Browser<br/><i>fpa-project-ui</i>"]
 
     subgraph APP["fpa_app-1 · FastAPI (app.py)"]
         AUTH["Authentication<br/><i>governance.authenticate</i>"]
@@ -45,7 +45,7 @@ flowchart TB
     end
 
     COMMIT["fpa_commitment-1<br/>Commitment service<br/><i>its own process + schema</i>"]
-    LLM["Model provider<br/><i>Claude CLI / API / Gemini</i>"]
+    LLM["Model provider<br/><i>Claude CLI / Codex SDK / API / Gemini</i>"]
 
     PG[("Postgres<br/><i>governance, audit</i>")]
     CH[("ClickHouse<br/><i>the cube</i>")]
@@ -101,12 +101,13 @@ flowchart LR
     OUT --> HIST["ask_history.record"]
 ```
 
-Three checks sit on this path, and none of them is the model's to make:
+Four checks sit on this path, and none of them is the model's to make:
 
 | Check | Where | What it stops |
 |---|---|---|
 | Entity scope | `compiler.py`, inside the SQL | A model widening its own access |
 | Country authorisation | `planner.py`, before compiling | Answering `0.00` for a country you cannot see |
+| Historical close | `historical.py`, tool guardrail and final gate | Dropping or changing a requested AS OF |
 | Arithmetic | `hooks.py`, after execution | A number that is not in any returned row |
 
 ---

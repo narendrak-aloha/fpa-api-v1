@@ -37,7 +37,7 @@ db/
       005_create_plan_approval.py
       006_create_variance_reporting.py
       007_create_audit_and_disclosure_log.py
-      ...                    new migrations land here as 008_, 009_, ...
+      008_... through 025_...  recompute, access, approvals and ask history
   runtime_roles.sql        Least-privilege role sketch, run by hand (not applied automatically)
 ```
 
@@ -94,13 +94,18 @@ Tables are created in categories, one migration each, in dependency order:
 | 006 | create variance reporting | `variance_report`, `variance_report_line` |
 | 007 | create audit and disclosure log | `llm_disclosure_log`, `audit_event` (+ `audit_entity_idx`); function `audit_event_append_only` with trigger `audit_event_no_update` |
 
+Revisions 008–025 add durable recompute/publication, variance evidence, governance
+hardening, proposals, append-only disclosure, requests/covenants, scenario traces,
+accounts/sessions, three approval gates, system-owned re-forecast covenants and
+ask history. The current head is 025; see `db/migrations/versions/` for the full sequence.
+
 The Alembic version table is `fpa_governance.alembic_version`.
 
 Common commands (from the project root):
 
 ```bash
 alembic -c db/alembic.ini upgrade head        # apply all migrations
-alembic -c db/alembic.ini current             # show the applied revision, e.g. 007 (head)
+alembic -c db/alembic.ini current             # show the applied revision, 025 (head)
 alembic -c db/alembic.ini history             # list revisions
 alembic -c db/alembic.ini downgrade 006       # step back to a revision
 alembic -c db/alembic.ini downgrade base      # remove everything
@@ -128,8 +133,8 @@ against an up-to-date database. Restarting the stack, or running
 
 Revision ids are **sequential numbers, not random hashes**. `env.py` takes the
 highest numeric revision and adds one, so the next files are
-`008_add_plan_comment.py`, `009_...`, each with `revision = "008"` and
-`down_revision = "007"`. This applies to both `revision --autogenerate` and a
+`026_add_plan_comment.py`, `027_...`, with the next revision using
+`revision = "026"` and `down_revision = "025"`. This applies to both `revision --autogenerate` and a
 plain `revision -m "..."` (hand-written migration), because `alembic.ini` sets
 `revision_environment = true`. Passing `--rev-id` explicitly overrides the
 number.
@@ -174,34 +179,57 @@ by that row's columns. Entries are grouped by table with a comment header:
   period_month: 2026-01-01
   from_currency: CAD
   to_currency: USD
-  rate: '1.36'
+  rate: '0.74'
 ```
 
 The loader groups entries by `table` and inserts tables in foreign-key order, so
 entries may appear in any order in the file. An entry without `table`, or with a
 table that has no model, stops the load with its record number.
 
-Other keys are column names, with three exceptions resolved by the loader:
+Other keys are column names, with these references and inputs resolved during loading:
 
 - `model_code` in `planning_dimension`, `planning_measure`, `plan_driver` and
   `plan_version` is looked up to `planning_model.model_id`.
 - `plan_version_code` in `scenario_set` and `plan_fx_rate` is looked up to
   `plan_version.plan_version_id`.
-- `audit_event.event_hash` is computed when not given.
+- `scenario_code` plus the resolved plan version identifies a scenario override.
+- `driver_code` is resolved to a driver id for bindings and overrides.
+- `password` is hashed into `password_hash`; `api_token` becomes a hashed standing
+  session in `user_session`. Seed loading fills a missing demo password without
+  replacing an existing one.
+- Audit event keys and chained hashes are computed by database triggers.
 
 Generated ids (`model_id`, `driver_id`, `plan_version_id`, …) and columns with
 database defaults (`created_at`, `active`, `status`, …) are omitted. Codes that
 look numeric (account codes, `'0'`) are quoted so they stay text; numeric
 columns such as `rate` are quoted to keep exact decimals.
 
-Row counts: `role` 5, `app_user` 4, `user_role` 7, `dim_company` 20,
-`dim_account` 25, `dim_cost_center` 54, `ledger_vintage` 2, `planning_model` 1,
-`planning_dimension` 19, `planning_measure` 8, `plan_driver` 6,
-`plan_state_transition` 6, `plan_version` 1, `scenario_set` 3,
-`plan_fx_rate` 108, `audit_event` 1.
+Current YAML fixture rows (before generated sessions/imported plan lines):
+
+| Table | Rows |
+|---|---|
+| `app_user` | 7 |
+| `audit_event` | 1 |
+| `covenant_rule` | 3 |
+| `dim_account` | 25 |
+| `dim_company` | 20 |
+| `dim_cost_center` | 54 |
+| `ledger_vintage` | 2 |
+| `plan_driver` | 12 |
+| `plan_driver_binding` | 16 |
+| `plan_fx_rate` | 108 |
+| `plan_state_transition` | 7 |
+| `plan_version` | 1 |
+| `planning_dimension` | 19 |
+| `planning_measure` | 8 |
+| `planning_model` | 1 |
+| `scenario_driver_override` | 4 |
+| `scenario_set` | 3 |
+| `user_company_scope` | 63 |
+| `user_role` | 10 |
 
 To add data, add an entry with `table: fpa_governance.<table>` and the row's
-columns. Total: 270 rows.
+columns. Total: 364 YAML rows.
 
 ```bash
 python -m db.seed                       # load db/seed.yaml
@@ -209,15 +237,9 @@ python -m db.seed --file other.yaml     # load another file with the same struct
 ```
 
 The loader inserts with `ON CONFLICT DO NOTHING` in one transaction, so it can
-be re-run safely; it prints the rows inserted per table. On an empty database:
+be re-run safely; it prints the rows inserted per table. Output reports inserted rows per table, standing token sessions and filled passwords.
+Counts are zero on later runs where the rows already exist.
 
-```text
-role +5, app_user +4, user_role +7, dim_company +20, dim_account +25,
-dim_cost_center +54, ledger_vintage +2, planning_model +1,
-planning_dimension +19, planning_measure +8, plan_driver +6,
-plan_state_transition +6, plan_version +1, scenario_set +3,
-plan_fx_rate +108, audit_event +1
-```
-
-The audit `event_hash` is `sha256("actor|entity_type|entity_id|action|<compact payload JSON>")`
-over the stored payload, so it can be recomputed from the stored row.
+Audit triggers derive `event_key` from actor, entity, action and stored JSON payload,
+then derive `event_hash` from the previous hash and that key. The application verifier
+recomputes both links; `make audit-verify` checks the chain.

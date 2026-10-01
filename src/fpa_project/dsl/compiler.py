@@ -76,6 +76,17 @@ class CompiledQuery:
     bridge: bool = False
 
 
+def close_month_lookup(year: int, month: int) -> tuple[str, dict[str, Any]]:
+    """Resolve a named close without giving agents a database lookup tool."""
+    start = datetime(year, month, 1)
+    end = datetime(year + (month == 12), month % 12 + 1, 1)
+    return (
+        "SELECT vintage, closed_at, note FROM fpa_cube.dim_ledger_vintage "
+        "WHERE closed_at >= {start:DateTime} AND closed_at < {end:DateTime} ORDER BY closed_at LIMIT 2",
+        {"start": start.isoformat(), "end": end.isoformat()},
+    )
+
+
 def vintage_lookup(as_of: str | None) -> tuple[str, dict[str, Any]]:
     """The query that names the vintage a read ran on.
 

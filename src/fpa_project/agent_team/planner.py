@@ -16,6 +16,7 @@ from .models import AgentFPAResponse, AgentPlan, ModelChangeProposal, PlanningRe
 from .registry import PlanningRegistry
 from .tools import FPATools
 from .api_keys import APIKeyRotator
+from .historical import resolve_historical
 import uuid
 
 
@@ -166,6 +167,17 @@ class FPAOrchestrator:
             log_event(self.logger, "dsl_validation_failed", run_id=run_id, status="VALIDATION_ERROR", code=result.errors[0].code if result.errors else "INVALID_OUTPUT")
             message = "; ".join(issue.message for issue in result.errors)
             return AgentFPAResponse(user_query=request.request, generated_dsl=dsl, execution_status="VALIDATION_ERROR", narrative_explanation=narrative, error_message=message)
+        # Final deterministic gate also protects callers that bypass Agno hooks.
+        if not result.plan.out_of_scope:
+            try:
+                constraint = resolve_historical(prepared.request, self.tools.executor)
+                if constraint:
+                    if result.plan.proposed_driver or result.plan.proposed_reforecast:
+                        raise ValueError('A historical evidence request cannot propose changes')
+                    constraint.validate(dsl)
+            except Exception as exc:
+                return AgentFPAResponse(user_query=prepared.request, generated_dsl=dsl,
+                                        execution_status="VALIDATION_ERROR", error_message=str(exc))
         if result.plan.proposed_driver:
             return AgentFPAResponse(user_query=prepared.request, execution_status="DRAFT",
                                     narrative_explanation="Driver proposal remains a draft; no active driver was changed.")
@@ -326,6 +338,14 @@ class FPAOrchestrator:
     def run_with_team(self, team: object, request: PlanningRequest, pause_handler=None) -> AgentFPAResponse:
         """Run an Agno Team with a hard two-attempt NL-to-DSL cap."""
         prepared = self.planner.prepare(request)
+        self.tools.historical_constraint = None
+        try:
+            self.tools.historical_constraint = resolve_historical(prepared.request, self.tools.executor)
+        except Exception as exc:
+            return AgentFPAResponse(user_query=prepared.request, execution_status="VALIDATION_ERROR",
+                                    error_message=str(exc))
+        historical_instruction = (self.tools.historical_constraint.instruction
+                                  if self.tools.historical_constraint else '')
         run_id = uuid.uuid4().hex[:12]
         self.masking_hook.before_model(
             {"request": prepared.request, "context": prepared.context},
@@ -338,7 +358,7 @@ class FPAOrchestrator:
         # outcomes are terminal and are not hidden by another model attempt.
         for attempt in range(1, self.MAX_SYNTAX_RETRIES + 1):
             log_event(self.logger, "team_attempt_started", run_id=run_id, attempt=attempt, max_attempts=self.MAX_SYNTAX_RETRIES)
-            if attempt == 1 or not members:
+            if attempt == 1:
                 prompt = correction
                 caller = team.run
             else:
@@ -347,7 +367,9 @@ class FPAOrchestrator:
                     f"Previous attempt failed: {correction}. "
                     "Use plain FinOpsExpr text beginning with SELECT; do not use square brackets, JSON, Markdown, SQL, or commentary in dsl."
                 )
-                caller = members[0].run
+                caller = members[0].run if members else team.run
+            if historical_instruction:
+                prompt += '\n\n' + historical_instruction
             self.audit_logger.record("agno", "request", {"request": prompt, "attempt": attempt}, run_id=run_id)
             try:
                 self.api_key_rotator.apply_to_team(team)
@@ -379,8 +401,10 @@ class FPAOrchestrator:
                 log_event(self.logger, "team_attempt_completed", run_id=run_id, attempt=attempt, status="RECEIVED")
             except Exception as exc:
                 log_event(self.logger, "team_attempt_failed", run_id=run_id, attempt=attempt, status="ERROR", error_type=type(exc).__name__)
-                correction = f"provider error: {type(exc).__name__}"
-                last_result = AgentFPAResponse(user_query=prepared.request, execution_status="VALIDATION_ERROR", error_message="model attempt failed")
+                from agno.exceptions import OutputCheckError
+                correction = str(exc) if isinstance(exc, OutputCheckError) else f"provider error: {type(exc).__name__}"
+                last_result = AgentFPAResponse(user_query=prepared.request, execution_status="VALIDATION_ERROR",
+                                              error_message=correction if isinstance(exc, OutputCheckError) else "model attempt failed")
                 continue
             if isinstance(content, AgentFPAResponse):
                 candidate = {"dsl": content.generated_dsl, "explanation": content.narrative_explanation or ""}
